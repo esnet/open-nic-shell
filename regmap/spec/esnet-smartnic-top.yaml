@@ -1,0 +1,66 @@
+toplevel:
+  name: esnet_smartnic
+  info: |
+    ESnet SmartNIC FPGA
+  pci_vendor: 0x10ee
+  pci_device: 0x903f
+
+  bars:
+    0:
+      name: bar0
+      desc: DMA memory
+      offset: 0
+      size: 0x00020000
+      decoder:
+        name: bar0
+        decoders:
+          qdma_pf_decoder: &qdma_pf_decoder
+            !include qdma_pf_decoder.yaml
+        interfaces:
+          - decoder: *qdma_pf_decoder
+            address: 0x000000
+    2:
+      name: bar2
+      desc: all user logic
+      offset: 0
+      size: 0x00400000
+      decoder:
+        name: bar2
+        blocks:
+          syscfg: &syscfg
+            !include syscfg.yaml
+        decoders:
+          qdma_decoder: &qdma_decoder
+            !include qdma_decoder.yaml
+          cmac_decoder: &cmac_decoder
+            !include cmac_decoder.yaml
+          box0_250mhz_decoder: &box0_250mhz_decoder
+            !include box0_250mhz_decoder.yaml
+          box1_322mhz_decoder: &box1_322mhz_decoder
+            !include box1_322mhz_decoder.yaml
+          sysmon_decoder: &sysmon_decoder
+            !include sysmon_decoder.yaml
+        interfaces:
+          - block: *syscfg
+            address: 0x000000
+
+          - decoder: *qdma_decoder
+            address: 0x001000
+
+          - decoder: *cmac_decoder
+            address: 0x008000
+            suffix: '0'
+
+          - decoder: *cmac_decoder
+            address: 0x00C000
+            suffix: '1'
+
+          - decoder: *sysmon_decoder
+            address: 0x010000
+
+          - decoder: *box1_322mhz_decoder
+            address: 0x200000
+
+          - decoder: *box0_250mhz_decoder
+            address: 0x100000
+
