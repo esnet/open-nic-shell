@@ -362,6 +362,10 @@ module open_nic_shell #(
   wire                         axis_aclk;
   wire     [NUM_CMAC_PORT-1:0] cmac_clk;
 
+  wire                  [15:0] div_count;
+  wire                  [15:0] burst_count;
+
+
   // Unused reset pairs must have their "reset_done" tied to 1
 
   // First 4-bit for QDMA subsystem
@@ -652,6 +656,9 @@ module open_nic_shell #(
     .mod_rstn                             (qdma_rstn),
     .mod_rst_done                         (qdma_rst_done),
 
+    .div_count                            (div_count),
+    .burst_count                          (burst_count),
+
     .axil_aclk                            (axil_aclk),
     .axis_aclk                            (axis_aclk)
   );
@@ -910,7 +917,11 @@ module open_nic_shell #(
     .box_rstn                        (box_322mhz_rstn),
     .box_rst_done                    (box_322mhz_rst_done),
 
+    .div_count                       (div_count),
+    .burst_count                     (burst_count),
+
     .axil_aclk                       (axil_aclk),
+    .axis_aclk                       (axis_aclk),
     .cmac_clk                        (cmac_clk)
   );
 

@@ -72,8 +72,12 @@ module box_322mhz #(
   input                          box_rstn,
   output                         box_rst_done,
 
+  output                  [15:0] div_count,
+  output                  [15:0] burst_count,
+
   // Each CMAC instance has its own phase-independent `cmac_clk`
   input                          axil_aclk,
+  input                          axis_aclk,
   input      [NUM_CMAC_PORT-1:0] cmac_clk
 );
 
