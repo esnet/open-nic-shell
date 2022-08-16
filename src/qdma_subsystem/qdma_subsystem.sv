@@ -138,6 +138,9 @@ module qdma_subsystem #(
   input                          mod_rstn,
   output                         mod_rst_done,
 
+  input                   [15:0] div_count,
+  input                   [15:0] burst_count,
+
 `ifdef __synthesis__
   output                         axil_aclk,
   output                         axis_aclk
@@ -285,7 +288,47 @@ module qdma_subsystem #(
   assign c2h_byp_in_st_csh_func     = 0;
   assign c2h_byp_in_st_csh_pfch_tag = 0;
 
-  qdma_subsystem_qdma_wrapper qdma_wrapper_inst (
+
+
+// ---- qdma_h2c shaper logic - start ----
+
+   logic [15:0]       div_counter;
+   logic [15:0]       burst_counter;
+   logic              bus_ready;
+
+   always @(posedge axis_aclk) begin
+      if (!axil_aresetn) begin
+         div_counter <= 1;
+         burst_counter <= 0;
+         bus_ready <= 1;
+      end else begin
+         if ( div_counter == 1 ) begin
+            div_counter <= div_count;
+            burst_counter <= burst_count;
+         end else begin
+            div_counter <= div_counter - 1;
+            if (burst_counter != 0) burst_counter <= burst_counter - 1;
+         end
+
+         if (burst_counter == 0) begin
+            bus_ready <= 0;
+         end else begin
+            bus_ready <= 1;
+         end
+      end
+   end
+
+   logic __axis_qdma_h2c_tvalid;
+   logic __axis_qdma_h2c_tready;
+
+   assign __axis_qdma_h2c_tvalid = axis_qdma_h2c_tvalid && bus_ready;
+   assign __axis_qdma_h2c_tready = axis_qdma_h2c_tready && bus_ready;
+
+// ---- qdma_h2c shaper logic - end ----
+
+
+
+qdma_subsystem_qdma_wrapper qdma_wrapper_inst (
     .pcie_rxp                        (pcie_rxp),
     .pcie_rxn                        (pcie_rxn),
     .pcie_txp                        (pcie_txp),
@@ -318,7 +361,7 @@ module qdma_subsystem #(
     .m_axis_h2c_tuser_mdata          (axis_qdma_h2c_tuser_mdata),
     .m_axis_h2c_tuser_mty            (axis_qdma_h2c_tuser_mty),
     .m_axis_h2c_tuser_zero_byte      (axis_qdma_h2c_tuser_zero_byte),
-    .m_axis_h2c_tready               (axis_qdma_h2c_tready),
+    .m_axis_h2c_tready               (__axis_qdma_h2c_tready), // connect shaped tready.
 
     .s_axis_c2h_tvalid               (axis_qdma_c2h_tvalid),
     .s_axis_c2h_tdata                (axis_qdma_c2h_tdata),
@@ -668,7 +711,7 @@ module qdma_subsystem #(
     qdma_subsystem_h2c #(
       .NUM_PHYS_FUNC (NUM_PHYS_FUNC)
     ) h2c_inst (
-      .s_axis_qdma_h2c_tvalid          (axis_qdma_h2c_tvalid),
+      .s_axis_qdma_h2c_tvalid          (__axis_qdma_h2c_tvalid),  // connect shaped tvalid.
       .s_axis_qdma_h2c_tdata           (axis_qdma_h2c_tdata),
       .s_axis_qdma_h2c_tcrc            (axis_qdma_h2c_tcrc),
       .s_axis_qdma_h2c_tlast           (axis_qdma_h2c_tlast),
