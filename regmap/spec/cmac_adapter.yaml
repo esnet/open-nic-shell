@@ -28,7 +28,7 @@ regs:
   - name: rx_drop_packets_hi
 
   - name: rx_drop_bytes_lo
-  - name: rx_drop_bytes_ho
+  - name: rx_drop_bytes_hi
 
   - name: rx_err_packets_lo
   - name: rx_err_packets_hi
