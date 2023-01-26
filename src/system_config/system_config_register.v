@@ -36,6 +36,12 @@
 // -----------------------------------------------------------------------------
 //   0x018  |  RO  | User status register
 // -----------------------------------------------------------------------------
+//   0x01C  |  RO  | Xilinx usr_access register
+// -----------------------------------------------------------------------------
+//   0x020  |  RO  | Xilinx dna register
+//     |    |      |
+//   0x02B  |      |
+// -----------------------------------------------------------------------------
 `timescale 1ns/1ps
 module system_config_register #(
   parameter [31:0] BUILD_TIMESTAMP = 32'h01010000
@@ -76,6 +82,10 @@ module system_config_register #(
   localparam REG_SHELL_STATUS    = 12'h010;
   localparam REG_USER_RST        = 12'h014;
   localparam REG_USER_STATUS     = 12'h018;
+  localparam REG_USR_ACCESS      = 12'h01c;  // xilinx usr_access register (32b).
+  localparam REG_DNA_0           = 12'h020;  // xilinx dna register (96b).
+  localparam REG_DNA_1           = 12'h024;
+  localparam REG_DNA_2           = 12'h028;
 
   // Regsiters
   reg          [31:0] reg_build_timestamp;
@@ -85,6 +95,9 @@ module system_config_register #(
   reg          [31:0] reg_shell_status;
   reg          [31:0] reg_user_rst;
   reg          [31:0] reg_user_status;
+
+  wire         [31:0] reg_usr_access;  // xilinx usr_access register.
+  reg          [95:0] reg_dna;         // xilinx dna register.
 
   reg          [31:0] shell_rst_last;
   reg          [31:0] user_rst_last;
@@ -149,6 +162,18 @@ module system_config_register #(
         end
         REG_USER_STATUS: begin
           reg_dout <= reg_user_status;
+        end
+        REG_USR_ACCESS: begin
+          reg_dout <= reg_usr_access;
+        end
+        REG_DNA_0: begin
+          reg_dout <= reg_dna[31:0];
+        end
+        REG_DNA_1: begin
+          reg_dout <= reg_dna[63:32];
+        end
+        REG_DNA_2: begin
+          reg_dout <= reg_dna[95:64];
         end
         default: begin
           reg_dout <= 32'hDEADBEEF;
@@ -305,5 +330,29 @@ module system_config_register #(
     end
   end
   endgenerate
+
+// ---- xilinx usr_access and dna register instantiations - begin ---
+
+   USR_ACCESSE2 USR_ACCESSE2_0 (.CFGCLK(), .DATA (reg_usr_access), .DATAVALID());
+
+   wire dna_dout;
+
+   DNA_PORTE2 #(.SIM_DNA_VALUE(96'h6666_5555_4444_3333_2222_1111)) DNA_PORTE2_0
+      (.CLK(aclk), .READ(!aresetn), .SHIFT(aresetn), .DIN(1'b0), .DOUT(dna_dout));
+
+   reg [6:0] dna_cnt;
+
+   always @(posedge aclk) begin
+      if (!aresetn) begin
+         dna_cnt <= 7'd96;
+         reg_dna <= 0;
+      end else if (dna_cnt > 0) begin
+         dna_cnt <= dna_cnt-1;
+         reg_dna <= {dna_dout, reg_dna[95:1]};
+      end
+   end
+
+// ---- xilinx usr_access and dna register logic - end ---
+
 
 endmodule: system_config_register
