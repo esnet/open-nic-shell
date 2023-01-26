@@ -363,6 +363,7 @@ module open_nic_shell #(
   wire  [64*NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tkeep;
   wire     [NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tlast;
   wire     [NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tuser_err;
+  wire     [NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tready;
 
   // CMAC subsystem interfaces to the box running at 322MHz
   wire     [NUM_CMAC_PORT-1:0] axis_cmac_tx_tvalid;
@@ -804,6 +805,7 @@ module open_nic_shell #(
       .s_axis_rx_tkeep      (axis_adap_rx_322mhz_tkeep[`getvec(64, i)]),
       .s_axis_rx_tlast      (axis_adap_rx_322mhz_tlast[i]),
       .s_axis_rx_tuser_err  (axis_adap_rx_322mhz_tuser_err[i]),
+      .s_axis_rx_tready     (axis_adap_rx_322mhz_tready[i]),
 
       .mod_rstn             (adap_rstn[i]),
       .mod_rst_done         (adap_rst_done[i]),
@@ -995,6 +997,7 @@ module open_nic_shell #(
     .m_axis_adap_rx_322mhz_tkeep     (axis_adap_rx_322mhz_tkeep),
     .m_axis_adap_rx_322mhz_tlast     (axis_adap_rx_322mhz_tlast),
     .m_axis_adap_rx_322mhz_tuser_err (axis_adap_rx_322mhz_tuser_err),
+    .m_axis_adap_rx_322mhz_tready    (axis_adap_rx_322mhz_tready),
 
     .m_axis_cmac_tx_tvalid           (axis_cmac_tx_tvalid),
     .m_axis_cmac_tx_tdata            (axis_cmac_tx_tdata),
