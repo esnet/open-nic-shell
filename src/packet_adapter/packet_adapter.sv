@@ -59,6 +59,7 @@ module packet_adapter #(
   input   [63:0] s_axis_rx_tkeep,
   input          s_axis_rx_tlast,
   input          s_axis_rx_tuser_err,
+  output         s_axis_rx_tready,
 
   output         m_axis_rx_tvalid,
   output [511:0] m_axis_rx_tdata,
@@ -172,6 +173,7 @@ module packet_adapter #(
     .s_axis_rx_tkeep      (s_axis_rx_tkeep),
     .s_axis_rx_tlast      (s_axis_rx_tlast),
     .s_axis_rx_tuser_err  (s_axis_rx_tuser_err),
+    .s_axis_rx_tready     (s_axis_rx_tready),
 
     .m_axis_rx_tvalid     (m_axis_rx_tvalid),
     .m_axis_rx_tdata      (m_axis_rx_tdata),
