@@ -27,6 +27,7 @@ module packet_adapter_rx #(
   input   [63:0] s_axis_rx_tkeep,
   input          s_axis_rx_tlast,
   input          s_axis_rx_tuser_err,
+  output         s_axis_rx_tready,
 
   output         m_axis_rx_tvalid,
   output [511:0] m_axis_rx_tdata,
@@ -80,7 +81,7 @@ module packet_adapter_rx #(
     .s_axis_tid       (0),
     .s_axis_tdest     (0),
     .s_axis_tuser     (s_axis_rx_tuser_err),
-    .s_axis_tready    (),
+    .s_axis_tready    (s_axis_rx_tready),
     
     .m_axis_tvalid    (axis_buf_tvalid),
     .m_axis_tdata     (axis_buf_tdata),
@@ -89,7 +90,7 @@ module packet_adapter_rx #(
     .m_axis_tid       (),
     .m_axis_tdest     (),
     .m_axis_tuser     (axis_buf_tuser_err),
-    .m_axis_tready    (1'b1),
+    .m_axis_tready    (axis_buf_tready),
 
     .aclk             (cmac_clk),
     .aresetn          (cmac_rstn)
@@ -102,7 +103,7 @@ module packet_adapter_rx #(
     .p_axis_tkeep     (axis_buf_tkeep),
     .p_axis_tlast     (axis_buf_tlast),
     .p_axis_tuser_mty (0),
-    .p_axis_tready    (1'b1),
+    .p_axis_tready    (axis_buf_tready),
 
     .size_valid       (),
     .size             (pkt_size),
@@ -118,11 +119,8 @@ module packet_adapter_rx #(
   assign pkt_drop = axis_buf_tvalid && axis_buf_tlast && axis_buf_tready && drop_busy;
   assign pkt_err  = axis_buf_tvalid && axis_buf_tlast && axis_buf_tready && axis_buf_tuser_err;
 
-  // Packets should be dropped when
-  // - error bit is asserted (i.e., tuser_err = 1 at the last beat), or
-  // - packet buffer does not have space
-  assign drop = (axis_buf_tvalid && axis_buf_tlast && axis_buf_tuser_err) ||
-                (axis_buf_tvalid && ~axis_buf_tready);
+  // Packets should be dropped when error bit is asserted (i.e., tuser_err = 1 at the last beat)
+  assign drop = (axis_buf_tready && axis_buf_tvalid && axis_buf_tlast && axis_buf_tuser_err);
 
   level_trigger_cdc #(
     .DATA_W     (16),
