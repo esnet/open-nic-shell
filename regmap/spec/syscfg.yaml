@@ -43,3 +43,8 @@ regs:
     info: Write 1 to trigger the corresponding reset
   - name: user_status
     access: ro
+  - name: usr_access
+    access: ro
+  - name: dna
+    access: ro
+    count: 3
