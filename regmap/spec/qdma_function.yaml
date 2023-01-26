@@ -14,6 +14,14 @@ regs:
       - name: qbase
         width: 16
 
+  - name: div_count
+    access: rw
+    init: 0x0000_007F
+
+  - name: burst_count
+    access: rw
+    init: 0x0000_0061
+
   - meta:
       pad_until: 0x400
 
