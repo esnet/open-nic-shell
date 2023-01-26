@@ -84,6 +84,8 @@ module qdma_subsystem_function #(
 
   wire   [15:0] q_base;
   wire   [15:0] num_q;
+  wire   [15:0] div_count;
+  wire   [15:0] burst_count;
   wire [2047:0] indir_table;
   wire  [319:0] hash_key;
 
@@ -139,6 +141,8 @@ module qdma_subsystem_function #(
     .s_axil_rresp   (s_axil_rresp),
     .s_axil_rready  (s_axil_rready),
 
+    .div_count      (div_count),
+    .burst_count    (burst_count),
     .q_base         (q_base),
     .num_q          (num_q),
     .indir_table    (indir_table),
@@ -153,15 +157,48 @@ module qdma_subsystem_function #(
   // TX path
   // ==========
 
+// ---- h2c axi4s shaper logic - begin ----
+
+   logic [15:0]       div_counter;
+   logic [15:0]       burst_counter;
+   logic              bus_ready;
+
+   always @(posedge axis_aclk) begin
+      if (!axil_aresetn) begin
+         div_counter <= 1;
+         burst_counter <= 0;
+         bus_ready <= 1;
+      end else begin
+         if ( div_counter == 1 ) begin
+            div_counter <= div_count;
+            burst_counter <= burst_count;
+         end else begin
+            div_counter <= div_counter - 1;
+            if (burst_counter != 0) burst_counter <= burst_counter - 1;
+         end
+
+         if (burst_counter == 0) begin
+            bus_ready <= 0;
+         end else begin
+            bus_ready <= 1;
+         end
+      end
+   end
+
+   logic  __s_axis_h2c_tvalid;
+   assign __s_axis_h2c_tvalid = s_axis_h2c_tvalid && bus_ready;
+
+// ---- h2c axi4s shaper logic - end ----
+
   // Monitor whether there is a packet in transmission on the H2C channel
   always @(posedge axis_aclk) begin
     if (~axil_aresetn) begin
       h2c_started <= 1'b0;
     end
-    else if (~h2c_started && s_axis_h2c_tvalid && s_axis_h2c_tready) begin
+    else if (~h2c_started && __s_axis_h2c_tvalid && s_axis_h2c_tready) begin
       h2c_started <= ~s_axis_h2c_tlast;
     end
-    else if (s_axis_h2c_tvalid && s_axis_h2c_tlast && s_axis_h2c_tready) begin
+    else if (__s_axis_h2c_tvalid && s_axis_h2c_tlast && s_axis_h2c_tready) begin
       h2c_started <= 1'b0;
     end
   end
@@ -172,24 +209,24 @@ module qdma_subsystem_function #(
     if (~axil_aresetn) begin
       h2c_matched <= 1'b0;
     end
-    else if (~h2c_matched && s_axis_h2c_tvalid && ~s_axis_h2c_tlast && s_axis_h2c_tready) begin
+    else if (~h2c_matched && __s_axis_h2c_tvalid && ~s_axis_h2c_tlast && s_axis_h2c_tready) begin
       h2c_matched <= h2c_q_in_range;
     end
-    else if (h2c_matched && s_axis_h2c_tvalid && s_axis_h2c_tlast && s_axis_h2c_tready) begin
+    else if (h2c_matched && __s_axis_h2c_tvalid && s_axis_h2c_tlast && s_axis_h2c_tready) begin
       h2c_matched <= 1'b0;
     end
   end
 
   assign h2c_q_in_range = (s_axis_h2c_tuser_qid >= q_base) &&
                           (s_axis_h2c_tuser_qid < (q_base + num_q));
-  assign h2c_match      = (~h2c_started && s_axis_h2c_tvalid && h2c_q_in_range) ||
+  assign h2c_match      = (~h2c_started && __s_axis_h2c_tvalid && h2c_q_in_range) ||
                           (h2c_started && h2c_matched);
 
-  assign axis_h2c_tvalid     = s_axis_h2c_tvalid && h2c_match;
+  assign axis_h2c_tvalid     = __s_axis_h2c_tvalid && h2c_match;
   assign axis_h2c_tdata      = s_axis_h2c_tdata;
   assign axis_h2c_tlast      = s_axis_h2c_tlast;
   assign axis_h2c_tuser_size = s_axis_h2c_tuser_size;
-  assign s_axis_h2c_tready   = axis_h2c_tready && h2c_match;
+  assign s_axis_h2c_tready   = axis_h2c_tready && h2c_match && bus_ready;
 
   // So far we do not have additional processing on TX packets.  Replace the
   // following portion if later TSO/GSO is to be implemented.
