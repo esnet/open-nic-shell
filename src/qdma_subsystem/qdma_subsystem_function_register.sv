@@ -27,6 +27,16 @@
 //          |      | 31:16 - Base queue ID
 //          |      | 15:0  - Number of queues
 // -----------------------------------------------------------------------------
+//   0x004  |  RW  | axi4s shaper divider count.
+//          |      | max axi4s data rate = 128 Gbps x burst-count / div_count.
+//          |      | 31:16 - 0
+//          |      | 15:0  - div_count
+// -----------------------------------------------------------------------------
+//   0x008  |  RW  | axi4s shaper burst count.
+//          |      | max axi4s data rate = 128 Gbps x burst-count / div_count.
+//          |      | 31:16 - 0
+//          |      | 15:0  - burst_count
+// -----------------------------------------------------------------------------
 //   0x400  |  RW  | RSS indirection table
 //     |    |      | 
 //   0x5FF  |      | 31:16 - reserved
@@ -68,6 +78,8 @@ module qdma_subsystem_function_register (
   output    [1:0] s_axil_rresp,
   input           s_axil_rready,
 
+  output   [15:0] div_count,
+  output   [15:0] burst_count,
   output   [15:0] q_base,
   output   [15:0] num_q,
   output [2047:0] indir_table,
@@ -82,12 +94,16 @@ module qdma_subsystem_function_register (
 
   localparam C_ADDR_W = 12;
 
-  localparam REG_QCONF      = 12'h000;
-  localparam REG_TABLE_BASE = 12'h400;
-  localparam REG_TABLE_MASK = 12'h600;
-  localparam REG_HKEY_BASE  = 12'h600;
+  localparam REG_QCONF       = 12'h000;
+  localparam REG_DIV_COUNT   = 12'h004;
+  localparam REG_BURST_COUNT = 12'h008;
+  localparam REG_TABLE_BASE  = 12'h400;
+  localparam REG_TABLE_MASK  = 12'h600;
+  localparam REG_HKEY_BASE   = 12'h600;
 
   reg          [31:0] reg_qconf;
+  reg          [15:0] reg_div_count;
+  reg          [15:0] reg_burst_count;
   reg          [15:0] reg_table[0:127];
   reg          [31:0] reg_hkey[0:9];
 
@@ -152,6 +168,12 @@ module qdma_subsystem_function_register (
           REG_QCONF: begin
             reg_dout <= reg_qconf;
           end
+          REG_DIV_COUNT: begin
+            reg_dout <= {16'd0, reg_div_count};
+          end
+          REG_BURST_COUNT: begin
+            reg_dout <= {16'd0, reg_burst_count};
+          end
           default: begin
             reg_dout <= 32'hDEADBEEF;
           end
@@ -171,6 +193,32 @@ module qdma_subsystem_function_register (
 
   assign q_base = reg_qconf[31:16];
   assign num_q  = reg_qconf[15:0];
+
+// ---- div_count and burst_count register instantiations - begin ----
+
+  always @(posedge axil_aclk) begin
+    if (~axil_aresetn) begin
+      reg_div_count <= 16'd127;
+    end
+    else if (reg_en && reg_we && reg_addr == REG_DIV_COUNT) begin
+      reg_div_count <= reg_din[15:0];
+    end
+  end
+
+  assign div_count = reg_div_count;
+
+  always @(posedge axil_aclk) begin
+    if (~axil_aresetn) begin
+      reg_burst_count <= 16'd97;
+    end
+    else if (reg_en && reg_we && reg_addr == REG_BURST_COUNT) begin
+      reg_burst_count <= reg_din[15:0];
+    end
+  end
+
+  assign burst_count = reg_burst_count;
+
+// ---- div_count and burst_count register instantiations - end ----
 
   generate for (genvar i = 0; i < 128; i++) begin
     always @(posedge axil_aclk) begin
