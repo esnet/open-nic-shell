@@ -57,6 +57,9 @@ module qdma_subsystem #(
   input   [16*NUM_PHYS_FUNC-1:0] s_axis_c2h_tuser_size,
   input   [16*NUM_PHYS_FUNC-1:0] s_axis_c2h_tuser_src,
   input   [16*NUM_PHYS_FUNC-1:0] s_axis_c2h_tuser_dst,
+  input      [NUM_PHYS_FUNC-1:0] s_axis_c2h_tuser_rss_hash_valid,
+  input   [12*NUM_PHYS_FUNC-1:0] s_axis_c2h_tuser_rss_hash,
+
   output     [NUM_PHYS_FUNC-1:0] s_axis_c2h_tready,
 
 `ifdef __synthesis__
@@ -821,6 +824,8 @@ module qdma_subsystem #(
         .s_axis_c2h_tuser_size (s_axis_c2h_tuser_size[`getvec(16, i)]),
         .s_axis_c2h_tuser_src  (s_axis_c2h_tuser_src[`getvec(16, i)]),
         .s_axis_c2h_tuser_dst  (s_axis_c2h_tuser_dst[`getvec(16, i)]),
+        .s_axis_c2h_tuser_rss_hash_valid  (s_axis_c2h_tuser_rss_hash_valid[i]),
+        .s_axis_c2h_tuser_rss_hash        (s_axis_c2h_tuser_rss_hash[`getvec(12, i)]),
         .s_axis_c2h_tready     (s_axis_c2h_tready[i]),
 
         .m_axis_c2h_tvalid     (axis_c2h_tvalid[i]),

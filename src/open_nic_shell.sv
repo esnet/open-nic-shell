@@ -298,6 +298,8 @@ module open_nic_shell #(
   wire  [16*NUM_PHYS_FUNC-1:0] axis_qdma_c2h_tuser_size;
   wire  [16*NUM_PHYS_FUNC-1:0] axis_qdma_c2h_tuser_src;
   wire  [16*NUM_PHYS_FUNC-1:0] axis_qdma_c2h_tuser_dst;
+  wire     [NUM_PHYS_FUNC-1:0] axis_qdma_c2h_tuser_rss_hash_valid;
+  wire  [12*NUM_PHYS_FUNC-1:0] axis_qdma_c2h_tuser_rss_hash;
   wire     [NUM_PHYS_FUNC-1:0] axis_qdma_c2h_tready;
 
   // Packet adapter interfaces to the box running at 250MHz
@@ -317,6 +319,8 @@ module open_nic_shell #(
   wire  [16*NUM_CMAC_PORT-1:0] axis_adap_rx_250mhz_tuser_size;
   wire  [16*NUM_CMAC_PORT-1:0] axis_adap_rx_250mhz_tuser_src;
   wire  [16*NUM_CMAC_PORT-1:0] axis_adap_rx_250mhz_tuser_dst;
+  wire     [NUM_CMAC_PORT-1:0] axis_adap_rx_250mhz_tuser_rss_hash_valid;
+  wire  [12*NUM_CMAC_PORT-1:0] axis_adap_rx_250mhz_tuser_rss_hash;
   wire     [NUM_CMAC_PORT-1:0] axis_adap_rx_250mhz_tready;
 
   // Packet adapter interfaces to the box running at 322MHz
@@ -332,6 +336,8 @@ module open_nic_shell #(
   wire  [64*NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tkeep;
   wire     [NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tlast;
   wire     [NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tuser_err;
+  wire     [NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tuser_rss_hash_valid;
+  wire  [12*NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tuser_rss_hash;
   wire     [NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tready;
 
   // CMAC subsystem interfaces to the box running at 322MHz
@@ -593,6 +599,8 @@ module open_nic_shell #(
     .s_axis_c2h_tuser_size                (axis_qdma_c2h_tuser_size),
     .s_axis_c2h_tuser_src                 (axis_qdma_c2h_tuser_src),
     .s_axis_c2h_tuser_dst                 (axis_qdma_c2h_tuser_dst),
+    .s_axis_c2h_tuser_rss_hash_valid      (axis_qdma_c2h_tuser_rss_hash_valid),
+    .s_axis_c2h_tuser_rss_hash            (axis_qdma_c2h_tuser_rss_hash),
     .s_axis_c2h_tready                    (axis_qdma_c2h_tready),
 
 `ifdef __synthesis__
@@ -718,6 +726,8 @@ module open_nic_shell #(
       .m_axis_rx_tuser_size (axis_adap_rx_250mhz_tuser_size[`getvec(16, i)]),
       .m_axis_rx_tuser_src  (axis_adap_rx_250mhz_tuser_src[`getvec(16, i)]),
       .m_axis_rx_tuser_dst  (axis_adap_rx_250mhz_tuser_dst[`getvec(16, i)]),
+      .m_axis_rx_tuser_rss_hash_valid (axis_adap_rx_250mhz_tuser_rss_hash_valid[i]),
+      .m_axis_rx_tuser_rss_hash       (axis_adap_rx_250mhz_tuser_rss_hash[`getvec(12, i)]),
       .m_axis_rx_tready     (axis_adap_rx_250mhz_tready[i]),
 
       .m_axis_tx_tvalid     (axis_adap_tx_322mhz_tvalid[i]),
@@ -732,6 +742,8 @@ module open_nic_shell #(
       .s_axis_rx_tkeep      (axis_adap_rx_322mhz_tkeep[`getvec(64, i)]),
       .s_axis_rx_tlast      (axis_adap_rx_322mhz_tlast[i]),
       .s_axis_rx_tuser_err  (axis_adap_rx_322mhz_tuser_err[i]),
+      .s_axis_rx_tuser_rss_hash_valid (axis_adap_rx_322mhz_tuser_rss_hash_valid[i]),
+      .s_axis_rx_tuser_rss_hash       (axis_adap_rx_322mhz_tuser_rss_hash[`getvec(12, i)]),
       .s_axis_rx_tready     (axis_adap_rx_322mhz_tready[i]),
 
       .mod_rstn             (adap_rstn[i]),
@@ -850,6 +862,8 @@ module open_nic_shell #(
     .m_axis_qdma_c2h_tuser_size       (axis_qdma_c2h_tuser_size),
     .m_axis_qdma_c2h_tuser_src        (axis_qdma_c2h_tuser_src),
     .m_axis_qdma_c2h_tuser_dst        (axis_qdma_c2h_tuser_dst),
+    .m_axis_qdma_c2h_tuser_rss_hash_valid (axis_qdma_c2h_tuser_rss_hash_valid),
+    .m_axis_qdma_c2h_tuser_rss_hash       (axis_qdma_c2h_tuser_rss_hash),
     .m_axis_qdma_c2h_tready           (axis_qdma_c2h_tready),
 
     .m_axis_adap_tx_250mhz_tvalid     (axis_adap_tx_250mhz_tvalid),
@@ -868,6 +882,8 @@ module open_nic_shell #(
     .s_axis_adap_rx_250mhz_tuser_size (axis_adap_rx_250mhz_tuser_size),
     .s_axis_adap_rx_250mhz_tuser_src  (axis_adap_rx_250mhz_tuser_src),
     .s_axis_adap_rx_250mhz_tuser_dst  (axis_adap_rx_250mhz_tuser_dst),
+    .s_axis_adap_rx_250mhz_tuser_rss_hash_valid (axis_adap_rx_250mhz_tuser_rss_hash_valid),
+    .s_axis_adap_rx_250mhz_tuser_rss_hash       (axis_adap_rx_250mhz_tuser_rss_hash),
     .s_axis_adap_rx_250mhz_tready     (axis_adap_rx_250mhz_tready),
 
     .mod_rstn                         (user_250mhz_rstn),
@@ -920,6 +936,8 @@ module open_nic_shell #(
     .m_axis_adap_rx_322mhz_tkeep     (axis_adap_rx_322mhz_tkeep),
     .m_axis_adap_rx_322mhz_tlast     (axis_adap_rx_322mhz_tlast),
     .m_axis_adap_rx_322mhz_tuser_err (axis_adap_rx_322mhz_tuser_err),
+    .m_axis_adap_rx_322mhz_tuser_rss_hash_valid (axis_adap_rx_322mhz_tuser_rss_hash_valid),
+    .m_axis_adap_rx_322mhz_tuser_rss_hash       (axis_adap_rx_322mhz_tuser_rss_hash),
     .m_axis_adap_rx_322mhz_tready    (axis_adap_rx_322mhz_tready),
 
     .m_axis_cmac_tx_tvalid           (axis_cmac_tx_tvalid),
