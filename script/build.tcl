@@ -343,6 +343,11 @@ foreach freq [list 250mhz 322mhz] {
     set box "box_$freq"
     set box_plugin ${user_plugin}/${box}
     
+    set box_plugin_ip ${user_plugin}/xilinx_ip
+    if {[file exists ${box_plugin_ip}/ila_axi4s.xci]} {
+      read_ip -quiet ${box_plugin_ip}/ila_axi4s.xci
+    }
+
     if {![file exists $box_plugin] || ![file exists ${user_plugin}/build_${box}.tcl]} {
         set box_plugin ${plugin_dir}/p2p/${box}
     }
