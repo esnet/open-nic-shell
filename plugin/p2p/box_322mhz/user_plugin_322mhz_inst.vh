@@ -53,6 +53,8 @@ p2p_322mhz #(
   .m_axis_adap_rx_322mhz_tkeep     (m_axis_adap_rx_322mhz_tkeep),
   .m_axis_adap_rx_322mhz_tlast     (m_axis_adap_rx_322mhz_tlast),
   .m_axis_adap_rx_322mhz_tuser_err (m_axis_adap_rx_322mhz_tuser_err),
+  .m_axis_adap_rx_322mhz_tuser_rss_hash_valid (m_axis_adap_rx_322mhz_tuser_rss_hash_valid),
+  .m_axis_adap_rx_322mhz_tuser_rss_hash       (m_axis_adap_rx_322mhz_tuser_rss_hash),
 
   .m_axis_cmac_tx_tvalid           (m_axis_cmac_tx_tvalid),
   .m_axis_cmac_tx_tdata            (m_axis_cmac_tx_tdata),
