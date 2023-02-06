@@ -19,7 +19,7 @@ set axis_register_slice axi_stream_pipeline
 create_ip -name axis_register_slice -vendor xilinx.com -library ip -module_name $axis_register_slice -dir ${ip_build_dir}
 set_property -dict { 
     CONFIG.TDATA_NUM_BYTES {64}
-    CONFIG.TUSER_WIDTH {48}
+    CONFIG.TUSER_WIDTH {61}
     CONFIG.REG_CONFIG {16}
     CONFIG.HAS_TKEEP {1}
     CONFIG.HAS_TLAST {1}
