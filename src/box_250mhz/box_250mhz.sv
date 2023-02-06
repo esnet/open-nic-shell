@@ -56,6 +56,8 @@ module box_250mhz #(
   output  [16*NUM_PHYS_FUNC-1:0] m_axis_qdma_c2h_tuser_size,
   output  [16*NUM_PHYS_FUNC-1:0] m_axis_qdma_c2h_tuser_src,
   output  [16*NUM_PHYS_FUNC-1:0] m_axis_qdma_c2h_tuser_dst,
+  output     [NUM_PHYS_FUNC-1:0] m_axis_qdma_c2h_tuser_rss_hash_valid,
+  output  [12*NUM_PHYS_FUNC-1:0] m_axis_qdma_c2h_tuser_rss_hash,
   input      [NUM_PHYS_FUNC-1:0] m_axis_qdma_c2h_tready,
 
   output     [NUM_CMAC_PORT-1:0] m_axis_adap_tx_250mhz_tvalid,
@@ -74,6 +76,8 @@ module box_250mhz #(
   input   [16*NUM_CMAC_PORT-1:0] s_axis_adap_rx_250mhz_tuser_size,
   input   [16*NUM_CMAC_PORT-1:0] s_axis_adap_rx_250mhz_tuser_src,
   input   [16*NUM_CMAC_PORT-1:0] s_axis_adap_rx_250mhz_tuser_dst,
+  input      [NUM_CMAC_PORT-1:0] s_axis_adap_rx_250mhz_tuser_rss_hash_valid,
+  input   [12*NUM_CMAC_PORT-1:0] s_axis_adap_rx_250mhz_tuser_rss_hash,
   output     [NUM_CMAC_PORT-1:0] s_axis_adap_rx_250mhz_tready,
 
   input                   [15:0] mod_rstn,
@@ -121,6 +125,8 @@ module box_250mhz #(
     assign m_axis_qdma_c2h_tuser_size = 0;
     assign m_axis_qdma_c2h_tuser_src  = 0;
     assign m_axis_qdma_c2h_tuser_dst  = 0;
+    assign m_axis_qdma_c2h_tuser_rss_hash_valid = 0;
+    assign m_axis_qdma_c2h_tuser_rss_hash = 0;
   end
   endgenerate
 
