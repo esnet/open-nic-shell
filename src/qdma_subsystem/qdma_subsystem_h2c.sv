@@ -62,12 +62,15 @@ module qdma_subsystem_h2c #(
   wire         size_valid;
   wire  [15:0] size;
 
+  wire   __tvalid;
+  assign __tvalid = s_axis_qdma_h2c_tvalid && !s_axis_qdma_h2c_tuser_err && !s_axis_qdma_h2c_tuser_zero_byte;
+    
   axi_stream_register_slice #(
     .TDATA_W (512),
     .TUSER_W (33),
     .MODE    ("forward")
   ) slice_inst (
-    .s_axis_tvalid (s_axis_qdma_h2c_tvalid),
+    .s_axis_tvalid (__tvalid),
     .s_axis_tdata  (s_axis_qdma_h2c_tdata),
     .s_axis_tkeep  ({64{1'b1}}),
     .s_axis_tlast  (s_axis_qdma_h2c_tlast),
