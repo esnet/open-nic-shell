@@ -40,6 +40,8 @@ set_property -dict {
     CONFIG.PF1_MSIX_CAP_TABLE_SIZE_qdma {008}
     CONFIG.PF2_MSIX_CAP_TABLE_SIZE_qdma {008}
     CONFIG.PF3_MSIX_CAP_TABLE_SIZE_qdma {008}
+    CONFIG.pfch_cache_depth {64}
+    CONFIG.wrb_coal_max_buf {32}
     CONFIG.dma_intf_sel_qdma {AXI_Stream_with_Completion}
     CONFIG.en_axi_mm_qdma {false}
     CONFIG.SYS_RST_N_BOARD_INTERFACE {pcie_perstn}
