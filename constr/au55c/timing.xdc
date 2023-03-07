@@ -26,14 +26,14 @@ foreach axis_aclk [get_clocks -of_object [get_nets axis_aclk*]] {
     }
 }
 
-create_pblock pblock_packet_adapter_tx
-add_cells_to_pblock [get_pblocks pblock_packet_adapter_tx] [get_cells -quiet {cmac_port*.packet_adapter_inst/tx_inst}]
-resize_pblock [get_pblocks pblock_packet_adapter_tx] -add {CLOCKREGION_X0Y4:CLOCKREGION_X1Y5}
+create_pblock pblock_cmac_subsystem
+add_cells_to_pblock [get_pblocks pblock_cmac_subsystem] [get_cells -quiet {cmac_port*.cmac_subsystem_inst}]
+resize_pblock [get_pblocks pblock_cmac_subsystem] -add {CLOCKREGION_X0Y5:CLOCKREGION_X3Y7}
 
-create_pblock pblock_packet_adapter_rx
-add_cells_to_pblock [get_pblocks pblock_packet_adapter_rx] [get_cells -quiet {cmac_port*.packet_adapter_inst/rx_inst}]
-resize_pblock [get_pblocks pblock_packet_adapter_rx] -add {CLOCKREGION_X2Y4:CLOCKREGION_X3Y5}
+create_pblock pblock_packet_adapter
+add_cells_to_pblock [get_pblocks pblock_packet_adapter] [get_cells -quiet {cmac_port*.packet_adapter_inst}]
+resize_pblock [get_pblocks pblock_packet_adapter] -add {SLR1}
 
 create_pblock pblock_qdma_subsystem
 add_cells_to_pblock [get_pblocks pblock_qdma_subsystem] [get_cells -quiet {qdma_if*.qdma_subsystem_inst}]
-resize_pblock [get_pblocks pblock_qdma_subsystem] -add {SLR0}
+resize_pblock [get_pblocks pblock_qdma_subsystem] -add {CLOCKREGION_X4Y0:CLOCKREGION_X7Y3}
