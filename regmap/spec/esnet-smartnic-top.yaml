@@ -29,6 +29,10 @@ toplevel:
         blocks:
           syscfg: &syscfg
             !include syscfg.yaml
+          qspi: &qspi
+            !include qspi.yaml
+          cms: &cms
+            !include cms.yaml
         decoders:
           qdma_decoder: &qdma_decoder
             !include qdma_decoder.yaml
@@ -58,9 +62,14 @@ toplevel:
           - decoder: *sysmon_decoder
             address: 0x010000
 
-          - decoder: *box1_322mhz_decoder
-            address: 0x200000
+          - block: *qspi
+            address: 0x040000
 
           - decoder: *box0_250mhz_decoder
             address: 0x100000
 
+          - decoder: *box1_322mhz_decoder
+            address: 0x200000
+
+          - block: *cms
+            address: 0x300000
