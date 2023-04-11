@@ -24,8 +24,6 @@
 // --------------------------------------------------
 //    0x01000  |  0x05FFF  |  QDMA subsystem
 // --------------------------------------------------
-//    0x06000  |  0x06FFF  |  QSPI 
-// --------------------------------------------------
 //    0x08000  |  0x0AFFF  |  CMAC subsystem #0
 // --------------------------------------------------
 //    0x0B000  |  0x0BFFF  |  Packet adapter #0
@@ -35,6 +33,8 @@
 //    0x0F000  |  0x0FFFF  |  Packet adapter #1
 // --------------------------------------------------
 //    0x10000  |  0x11FFF  |  Sysmon block
+// --------------------------------------------------
+//    0x40000  |  0x40FFF  |  QSPI
 // --------------------------------------------------
 //   0x100000  |  0x1FFFFF |  Box0 @ 250MHz
 // --------------------------------------------------
@@ -248,11 +248,11 @@ module system_config_address_map #(
   localparam C_ADAP0_BASE_ADDR = 32'h0B000;
   localparam C_CMAC1_BASE_ADDR = 32'h0C000;
   localparam C_ADAP1_BASE_ADDR = 32'h0F000;
-  localparam C_SMON_BASE_ADDR  = 32'h10000;  // 14 bits
+  localparam C_SMON_BASE_ADDR  = 32'h10000;  // 13 bits
+  localparam C_QSPI_BASE_ADDR  = 32'h40000;  // 12 bits
   localparam C_BOX1_BASE_ADDR  = 32'h200000; // 20 bits
   localparam C_BOX0_BASE_ADDR  = 32'h100000; // 20 bits
   localparam C_CMS_BASE_ADDR   = 32'h300000; // 18 bits
-  localparam C_QSPI_BASE_ADDR  = 32'h340000; // 12 bits
 
   wire                [31:0] axil_scfg_awaddr;
   wire                [31:0] axil_scfg_araddr;
