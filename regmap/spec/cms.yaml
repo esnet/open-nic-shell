@@ -294,3 +294,5 @@ regs:
   - name: oem_id_reg
   - meta:
       pad_until: 0x29000
+  - name: mailbox
+    count: 37
