@@ -177,7 +177,7 @@ module packet_adapter_rx #(
 
   axi_stream_packet_buffer #(
     .CLOCKING_MODE   ("independent_clock"),
-    .CDC_SYNC_STAGES (2),
+    .CDC_SYNC_STAGES (3),
     .TDATA_W         (512),
     .TUSER_W         (1+12),
     .MIN_PKT_LEN     (MIN_PKT_LEN),

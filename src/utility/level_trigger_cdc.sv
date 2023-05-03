@@ -58,7 +58,7 @@ module level_trigger_cdc #(
     .READ_DATA_WIDTH     (C_FIFO_DATA_W),
     .READ_MODE           ("fwft"),
     .WRITE_DATA_WIDTH    (C_FIFO_DATA_W),
-    .CDC_SYNC_STAGES     (2)
+    .CDC_SYNC_STAGES     (3)
   ) fifo_inst (
     .wr_en         (fifo_wr_en),
     .din           (fifo_din),
