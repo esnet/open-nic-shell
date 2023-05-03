@@ -27,5 +27,5 @@ set_property -dict {
     CONFIG.WUSER_WIDTH {0}
     CONFIG.BUSER_WIDTH {0}
     CONFIG.ACLK_ASYNC {1}
-    CONFIG.SYNCHRONIZATION_STAGES {2}
+    CONFIG.SYNCHRONIZATION_STAGES {3}
 } [get_ips $axi_clock_converter]
