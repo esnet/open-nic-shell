@@ -33,7 +33,7 @@ module axi_stream_packet_fifo #(
   parameter int RD_DATA_COUNT_WIDTH = 1,
   parameter int PROG_FULL_THRESH    = 10,
   parameter int PROG_EMPTY_THRESH   = 10,
-  parameter int CDC_SYNC_STAGES     = 2
+  parameter int CDC_SYNC_STAGES     = 3
 ) (
   input                            s_axis_tvalid,
   output                           s_axis_tready,
