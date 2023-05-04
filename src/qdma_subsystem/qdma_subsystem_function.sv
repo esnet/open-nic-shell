@@ -84,6 +84,10 @@ module qdma_subsystem_function #(
   // using the same depth to handle the case of 64B frames   
   localparam C_QID_FIFO_DEPTH = C_PKT_FIFO_DEPTH; 
 
+  // ILA enable/disable
+  localparam bit ENABLE_C2H_0_ILA = 1'b0;
+  localparam bit ENABLE_C2H_1_ILA = 1'b0;
+
   wire   [15:0] q_base;
   wire   [15:0] num_q;
   wire   [15:0] div_count;
@@ -321,16 +325,21 @@ module qdma_subsystem_function #(
     .aresetn           (axil_aresetn)
   );
 
-  ila_axi4s ila_axi4s_0 (
-            .clk(axis_aclk),
-            .probe0(axis_c2h_tdata),
-            .probe1(axis_c2h_tvalid),
-            .probe2(axis_c2h_tlast),
-            .probe3(64'd0),
-            .probe4(axis_c2h_tready),
-            .probe5({3'h0, axis_c2h_tuser_rss_hash_valid,
-                     axis_c2h_tuser_rss_hash,
-                     axis_c2h_tuser_size}));
+  generate
+    if (ENABLE_C2H_0_ILA) begin : g__c2h_0_ila
+      ila_axi4s ila_axi4s_0 (
+        .clk(axis_aclk),
+        .probe0(axis_c2h_tdata),
+        .probe1(axis_c2h_tvalid),
+        .probe2(axis_c2h_tlast),
+        .probe3(64'd0),
+        .probe4(axis_c2h_tready),
+        .probe5({3'h0, axis_c2h_tuser_rss_hash_valid,
+                       axis_c2h_tuser_rss_hash,
+                       axis_c2h_tuser_size})
+      );
+    end : g__c2h_0_ila
+  endgenerate
 
   wire [6:0] hash_mux;
   assign hash_mux = axis_c2h_tuser_rss_hash_valid ? axis_c2h_tuser_rss_hash[6:0] : hash_result[6:0];
@@ -449,15 +458,20 @@ module qdma_subsystem_function #(
   assign m_axis_c2h_tuser_qid  = qid_fifo_dout;
   assign axis_c2h_buf_tready   = m_axis_c2h_tready && ~qid_fifo_empty;
 
-  ila_axi4s ila_axi4s_1 (
-            .clk(axis_aclk),
-            .probe0(m_axis_c2h_tdata),
-            .probe1(m_axis_c2h_tvalid),
-            .probe2(m_axis_c2h_tlast),
-            .probe3(64'd0),
-            .probe4(m_axis_c2h_tready),
-            .probe5({5'h00,
-                     m_axis_c2h_tuser_qid,
-                     m_axis_c2h_tuser_size}));
+  generate
+    if (ENABLE_C2H_1_ILA) begin : g__c2h_1_ila
+      ila_axi4s ila_axi4s_1 (
+        .clk(axis_aclk),
+        .probe0(m_axis_c2h_tdata),
+        .probe1(m_axis_c2h_tvalid),
+        .probe2(m_axis_c2h_tlast),
+        .probe3(64'd0),
+        .probe4(m_axis_c2h_tready),
+        .probe5({5'h00,
+                 m_axis_c2h_tuser_qid,
+                 m_axis_c2h_tuser_size})
+      );
+    end : g__c2h_1_ila
+  endgenerate
 
 endmodule: qdma_subsystem_function
