@@ -141,7 +141,7 @@ module packet_adapter_tx #(
   assign m_axis_tx_tuser_err = 1'b0;
 
   axi_stream_packet_fifo #(
-    .CDC_SYNC_STAGES  (2),
+    .CDC_SYNC_STAGES  (3),
     .CLOCKING_MODE    ("independent_clock"),
     .ECC_MODE         ("no_ecc"),
     .FIFO_DEPTH       (C_FIFO_DEPTH),

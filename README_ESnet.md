@@ -26,4 +26,4 @@
 
 ***** REVIEW origin/esnet-patches-dev TO ENSURE THAT IT WILL PUSH WHAT IS WANTED
 
-- git push --force origin esnet-patches-dev:origin/esnet-patches
+- git push --force origin origin/esnet-patches-dev:esnet-patches

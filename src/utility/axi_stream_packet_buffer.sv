@@ -22,7 +22,7 @@
 `timescale 1ns/1ps
 module axi_stream_packet_buffer #(
   parameter      CLOCKING_MODE   = "common_clock",
-  parameter int  CDC_SYNC_STAGES = 2,
+  parameter int  CDC_SYNC_STAGES = 3,
   parameter int  TDATA_W         = 512,
   parameter int  TID_W           = 1,
   parameter int  TDEST_W         = 1,

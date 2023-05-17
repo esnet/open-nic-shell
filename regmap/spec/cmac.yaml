@@ -8,6 +8,19 @@ regs:
 
   - name: gt_reset
   - name: reset
+    fields:
+      - name: usr_rx_serdes_reset
+        width: 10
+      - meta:
+          pad_until: 28
+      - name: ctl_an_reset
+        width: 1
+      - meta:
+          pad_until: 30
+      - name: usr_rx_reset
+        width: 1
+      - name: usr_tx_reset
+        width: 1
   - name: switch_core_mode
   - name: conf_tx_1
     fields:
@@ -44,7 +57,13 @@ regs:
   - meta:
       pad_until: 0x2c
   - name: conf_tx_bip_override
-  - name: onf_tx_fc_ctrl_1
+    fields:
+      - name: ctl_tx_lane0_vlm_bip7_ovrd_val
+        width: 8
+      - name: ctl_tx_lane0_vlm_bip7_ovrd
+        width: 1
+
+  - name: conf_tx_fc_ctrl_1
   - name: conf_tx_fc_rfrh_1
   - name: conf_tx_fc_rfrh_2
   - name: conf_tx_fc_rfrh_3
@@ -146,8 +165,12 @@ regs:
 
   - meta:
       pad_until: 0x2b0
-
   - name: tick
+
+  - meta:
+      pad_until: 0x2b8
+  - default:
+      width: 64
   - name: stat_cycle_count
   - name: stat_rx_bip_err_0
   - name: stat_rx_bip_err_1
@@ -275,27 +298,59 @@ regs:
   - name: stat_otn_tx_bad_code
 
   - meta:
-      pad_until: 0x800
-
-  - meta:
       pad_until: 0x1000
 
   - name: rsfec_conf_ind_correction
     width: 32
     access: rw
+    fields:
+      - name: ctl_rx_rsfec_en_cor
+        width: 1
+      - name: ctl_rx_rsfec_en_ind
+        width: 1
+      - name: ctl_rx_rsfec_ieee_err_ind_mode
+        width: 1
+
   - name: stat_rsfec_status
     width: 32
+    fields:
+      - meta:
+          pad_until: 2
+      - name: stat_rx_rsfec_hi_ser
+        width: 1
+      - name: stat_rx_rsfec_hi_ser_lh
+        width: 1
+      - meta:
+          pad_until: 8
+      - name: stat_rx_rsfec_am_lock0
+        width: 1
+      - name: stat_rx_rsfec_am_lock1
+        width: 1
+      - name: stat_rx_rsfec_am_lock2
+        width: 1
+      - name: stat_rx_rsfec_am_lock3
+        width: 1
+      - meta:
+          pad_until: 14
+      - name: stat_rx_rsfec_lane_alignment_status
+        width: 1
 
   - name: stat_rx_rsfec_corrected_cw_inc
-    width: 64
   - name: stat_rx_rsfec_uncorrected_cw_inc
-    width: 64
-
-  - name: stat_rsfec_lane_mapping
-    width: 32
 
   - default:
       width: 32
+
+  - name: stat_rsfec_lane_mapping
+    fields:
+      - name: stat_rx_rsfec_lane_map0
+        width: 2
+      - name: stat_rx_rsfec_lane_map1
+        width: 2
+      - name: stat_rx_rsfec_lane_map2
+        width: 2
+      - name: stat_rx_rsfec_lane_map3
+        width: 2
 
   - name: stat_rx_rsfec_err_count0_inc
   - meta:
@@ -310,13 +365,27 @@ regs:
   - meta:
       pad_until: 0x103c
   - name: stat_rx_rsfec_cw_inc
+
   - meta:
       pad_until: 0x1044
   - name: stat_tx_otn_rsfec_status
+    fields:
+      - name: stat_tx_rsfec_blk_lock
+        width: 1
+      - name: stat_tx_rsfec_am_lock
+        width: 1
+      - name: stat_tx_rsfec_ln_align_status
+        width: 1
+
   - meta:
       pad_until: 0x107c
   - name: rsfec_conf_enable
     access: rw
+    fields:
+      - name: ctl_rx_rsfec_enable
+        width: 1
+      - name: ctl_rsfec_enable
+        width: 1
 
   # - name: adpt_offset_tx_pkt_recv
   # - name: adpt_offset_tx_pkt_drop
