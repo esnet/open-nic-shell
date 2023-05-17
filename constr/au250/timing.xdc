@@ -27,8 +27,7 @@ foreach cmac_clk [get_clocks -of_object [get_nets cmac_clk*]] {
 
 create_pblock pblock_packet_adapter
 add_cells_to_pblock [get_pblocks pblock_packet_adapter] [get_cells -quiet {cmac_port*.packet_adapter_inst}]
-add_cells_to_pblock [get_pblocks pblock_packet_adapter] [get_cells -quiet {box_250mhz_inst}]
-resize_pblock [get_pblocks pblock_packet_adapter] -add {CLOCKREGION_X4Y8:CLOCKREGION_X5Y9}
+resize_pblock [get_pblocks pblock_packet_adapter] -add {SLR2}
 
 create_pblock pblock_qdma_subsystem
 add_cells_to_pblock [get_pblocks pblock_qdma_subsystem] [get_cells -quiet [list qdma_subsystem_inst]]
