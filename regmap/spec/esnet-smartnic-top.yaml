@@ -62,9 +62,6 @@ toplevel:
           - decoder: *sysmon_decoder
             address: 0x010000
 
-          - block: *qspi
-            address: 0x040000
-
           - decoder: *box0_250mhz_decoder
             address: 0x100000
 
@@ -73,3 +70,7 @@ toplevel:
 
           - block: *cms
             address: 0x300000
+
+          - block: *qspi
+            address: 0x340000
+
