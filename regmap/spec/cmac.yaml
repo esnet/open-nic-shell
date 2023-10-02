@@ -384,7 +384,7 @@ regs:
     fields:
       - name: ctl_rx_rsfec_enable
         width: 1
-      - name: ctl_rsfec_enable
+      - name: ctl_tx_rsfec_enable
         width: 1
 
   # - name: adpt_offset_tx_pkt_recv
