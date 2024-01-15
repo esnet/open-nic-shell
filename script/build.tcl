@@ -25,7 +25,7 @@ proc _do_impl {jobs {strategies ""}} {
         for {set i 1} {$i < [llength $strategies]} {incr i 1} {
             set r impl_[expr $i + 1]
             set s [lindex $strategies $i]
-            create_run $r -flow {Vivado Implementation 2020} -parent_run synth_1 -strategy "$s"
+            create_run $r -flow {Vivado Implementation 2023} -parent_run synth_1 -strategy "$s"
             lappend impl_runs $r
         }
         launch_runs $impl_runs -to_step write_bitstream -jobs $jobs
@@ -107,6 +107,7 @@ array set build_options {
     -bitstream_userid  "0xDEADC0DE"
     -bitstream_usr_access "0x66669999"
     -sim  0
+    -impl_strategy "Vivado Implementation Defaults"
 }
 set build_options(-user_plugin) ${plugin_dir}/p2p
 
@@ -444,8 +445,9 @@ if {$sim} {
 
 # Implement design
 if {$impl} {
+    puts "Executing implementation using strategy: $impl_strategy"
     update_compile_order -fileset sources_1
-    _do_impl $jobs {"Vivado Implementation Defaults"}
+    _do_impl $jobs \{$impl_strategy\}
 }
 
 if {$post_impl} {
