@@ -117,9 +117,6 @@ module qdma_subsystem_function #(
   wire   [11:0] axis_c2h_tuser_rss_hash;
   wire          axis_c2h_tready;
 
-  wire          hash_result_valid;
-  wire   [31:0] hash_result;
-
   reg           qid_fifo_wr_en;
   reg    [10:0] qid_fifo_din;
   wire          qid_fifo_rd_en;
@@ -358,21 +355,6 @@ module qdma_subsystem_function #(
   end
   endgenerate
 
-  // Passively "listen" to the stream and compute hash over the packet headers
-  qdma_subsystem_hash hash_inst (
-    .p_axis_tvalid     (axis_c2h_tvalid),
-    .p_axis_tdata      (axis_c2h_tdata),
-    .p_axis_tlast      (axis_c2h_tlast),
-    .p_axis_tready     (axis_c2h_tready),
-
-    .hash_key          (hash_key),
-    .hash_result_valid (hash_result_valid),
-    .hash_result       (hash_result),
-
-    .aclk              (axis_aclk),
-    .aresetn           (axil_aresetn)
-  );
-
   generate
     if (ENABLE_C2H_0_ILA) begin : g__c2h_0_ila
       ila_axi4s ila_axi4s_0 (
@@ -389,8 +371,8 @@ module qdma_subsystem_function #(
     end : g__c2h_0_ila
   endgenerate
 
-  wire [6:0] hash_mux;
-  assign hash_mux = axis_c2h_tuser_rss_hash_valid ? axis_c2h_tuser_rss_hash[6:0] : hash_result[6:0];
+  wire [6:0] rss_hash;
+  assign rss_hash = axis_c2h_tuser_rss_hash_valid ? axis_c2h_tuser_rss_hash[6:0] : 0;
 
   // Using the selected hash, look up a virtual queue ID in the RSS indirection
   // table, which is then converted into a physical queue ID.  The physical
@@ -401,9 +383,9 @@ module qdma_subsystem_function #(
       qid_fifo_wr_en <= 1'b0;
       qid_fifo_din   <= 0;
     end
-    else if (hash_result_valid) begin
+    else if (axis_c2h_tvalid && axis_c2h_tready && axis_c2h_tlast) begin
       qid_fifo_wr_en <= 1'b1;
-      qid_fifo_din   <= indir_table[`getvec(16, hash_mux[6:0])] + q_base;
+      qid_fifo_din   <= indir_table[`getvec(16, rss_hash[6:0])] + q_base;
     end
     else begin
       qid_fifo_wr_en <= 1'b0;
