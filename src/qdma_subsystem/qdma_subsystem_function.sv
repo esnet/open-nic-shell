@@ -95,7 +95,6 @@ module qdma_subsystem_function #(
   wire   [15:0] div_count;
   wire   [15:0] burst_count;
   wire [2047:0] indir_table;
-  wire  [319:0] hash_key;
 
   reg           h2c_started;
   reg           h2c_matched;
@@ -153,7 +152,6 @@ module qdma_subsystem_function #(
     .q_base         (q_base),
     .num_q          (num_q),
     .indir_table    (indir_table),
-    .hash_key       (hash_key),
 
     .axil_aclk      (axil_aclk),
     .axis_aclk      (axis_aclk),
