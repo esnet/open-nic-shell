@@ -42,10 +42,6 @@
 //   0x5FF  |      | 31:16 - reserved
 //          |      | 15:0  - queue ID at index n
 // -----------------------------------------------------------------------------
-//   0x600  |  RW  | RSS hash key data register
-//     |    |      | 
-//   0x627  |      | 
-// -----------------------------------------------------------------------------
 //   0x800  |  RO  | TX packets from function
 //   0x804  |      |
 // -----------------------------------------------------------------------------
@@ -83,14 +79,11 @@ module qdma_subsystem_function_register (
   output   [15:0] q_base,
   output   [15:0] num_q,
   output [2047:0] indir_table,
-  output  [319:0] hash_key,
 
   input           axil_aclk,
   input           axis_aclk,
   input           axil_aresetn
 );
-
-  `define DEFAULT_HKEY 320'h7C9C37DE18DC4386D9270F6F260374B8BFD0404B7872E224DC1B91BB011BA7A6376CC87ED6E31417
 
   localparam C_ADDR_W = 12;
 
@@ -99,13 +92,11 @@ module qdma_subsystem_function_register (
   localparam REG_BURST_COUNT = 12'h008;
   localparam REG_TABLE_BASE  = 12'h400;
   localparam REG_TABLE_MASK  = 12'h600;
-  localparam REG_HKEY_BASE   = 12'h600;
 
   reg          [31:0] reg_qconf;
   reg          [15:0] reg_div_count;
   reg          [15:0] reg_burst_count;
   reg          [15:0] reg_table[0:127];
-  reg          [31:0] reg_hkey[0:9];
 
   wire                reg_en;
   wire                reg_we;
@@ -154,14 +145,6 @@ module qdma_subsystem_function_register (
     else if (reg_en && ~reg_we) begin
       if ((reg_addr & REG_TABLE_MASK) == REG_TABLE_BASE) begin
         reg_dout[15:0] <= reg_table[reg_addr[8:2]];
-      end
-      else if ((reg_addr >= REG_HKEY_BASE) && (reg_addr < REG_HKEY_BASE + (10 << 2))) begin
-        for (int i = 0; i < 10; i++) begin
-          if (((reg_addr - REG_HKEY_BASE) >> 2) == i) begin
-            reg_dout <= reg_hkey[i];
-            break;
-          end
-        end
       end
       else begin
         case (reg_addr)
@@ -234,22 +217,5 @@ module qdma_subsystem_function_register (
   end
   endgenerate
 
-  generate for (genvar i = 0; i < 10; i++) begin
-    wire [319:0] shifted_hkey;
-
-    assign shifted_hkey = (`DEFAULT_HKEY >> (i * 32));
-
-    always @(posedge axil_aclk) begin
-      if (~axil_aresetn) begin
-        reg_hkey[i] <= shifted_hkey[31:0];
-      end
-      else if (reg_en && reg_we && ((reg_addr - REG_HKEY_BASE) >> 2) == i) begin
-        reg_hkey[i] <= reg_din;
-      end
-    end
-
-    assign hash_key[`getvec(32, i)] = reg_hkey[i];
-  end
-  endgenerate
 
 endmodule: qdma_subsystem_function_register

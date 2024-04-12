@@ -28,7 +28,3 @@ regs:
   - name: indir_table
     access: rw
     count: 128
-
-  - name: hash_key
-    access: rw
-    count: 10
