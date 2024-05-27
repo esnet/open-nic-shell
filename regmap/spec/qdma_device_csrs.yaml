@@ -26,68 +26,68 @@ regs:
     fields:
       - name: max_payload_issued
         width: 3
-        enum_hex:
-          0 : PLD_128
-          1 : PLD_256
-          2 : PLD_512
-          3 : PLD_1024
-          4 : PLD_2048
-          5 : PLD_4096
+        enum:
+          0x0 : PLD_128
+          0x1 : PLD_256
+          0x2 : PLD_512
+          0x3 : PLD_1024
+          0x4 : PLD_2048
+          0x5 : PLD_4096
       - name: rsvd1
         width: 1
       - name: max_payload_prog
         width: 3
-        enum_hex:
-          0 : PLD_128
-          1 : PLD_256
-          2 : PLD_512
-          3 : PLD_1024
-          4 : PLD_2048
-          5 : PLD_4096
+        enum:
+          0x0 : PLD_128
+          0x1 : PLD_256
+          0x2 : PLD_512
+          0x3 : PLD_1024
+          0x4 : PLD_2048
+          0x5 : PLD_4096
       - name: rsvd2
         width: 25
   - name: cfg_pcie_max_rdrq_sz
     fields:
       - name: max_read_size_issued
         width: 3
-        enum_hex:
-          0 : PLD_128
-          1 : PLD_256
-          2 : PLD_512
-          3 : PLD_1024
-          4 : PLD_2048
-          5 : PLD_4096
+        enum:
+          0x0 : PLD_128
+          0x1 : PLD_256
+          0x2 : PLD_512
+          0x3 : PLD_1024
+          0x4 : PLD_2048
+          0x5 : PLD_4096
       - name: rsvd1
         width: 1
       - name: max_read_size_prog
         width: 3
-        enum_hex:
-          0 : PLD_128
-          1 : PLD_256
-          2 : PLD_512
-          3 : PLD_1024
-          4 : PLD_2048
-          5 : PLD_4096
+        enum:
+          0x0 : PLD_128
+          0x1 : PLD_256
+          0x2 : PLD_512
+          0x3 : PLD_1024
+          0x4 : PLD_2048
+          0x5 : PLD_4096
   - name: cfg_sys_id
     fields:
       - name: system_id
         width: 16
       - name: type
         width: 1
-        enum_hex:
-          0 : SOFT_IP
-          1 : HARD_IP
+        enum:
+          0x0 : SOFT_IP
+          0x1 : HARD_IP
   - name: cfg_msix_en
     access: ro
   - name: cfg_pcie_data_width
     fields:
       - name: dp_width
         width: 3
-        enum_hex:
-          0 : WIDTH_64
-          1 : WIDTH_128
-          2 : WIDTH_256
-          3 : WIDTH_512
+        enum:
+          0x0 : WIDTH_64
+          0x1 : WIDTH_128
+          0x2 : WIDTH_256
+          0x3 : WIDTH_512
   - name: cfg_pcie_ctrl
     fields:
       - name: relaxed_ordering
@@ -98,10 +98,10 @@ regs:
         width: 14
       - name: mgmt_axil_ctrl
         width: 2
-        enum_hex:
-          0 : RR
-          1 : MGMT_ONLY
-          2 : AXIL_ONLY
+        enum:
+          0x0 : RR
+          0x1 : MGMT_ONLY
+          0x2 : AXIL_ONLY
   - name: cfg_msi_en
 
   - meta:
@@ -238,9 +238,9 @@ regs:
         width: 17
       - name: sel
         width: 1
-        enum_hex:
-          0 : H2C
-          1 : C2H
+        enum:
+          0x0 : H2C
+          0x1 : C2H
       - name: valid
         width: 1
   - name: glbl_dsc_err_log1
@@ -249,13 +249,13 @@ regs:
         width: 5
       - name: sub_type
         width: 4
-        enum_hex:
-          0 : NON_UPDATE_ERR
+        enum:
+          0x0 : NON_UPDATE_ERR
           # No entry for 1
-          2 : PIDX_UPDATE_OVFL
-          3 : RX_TOO_MANY_CREDITS
-          4 : FENCED_CREDIT_RX
-          5 : VIRTIO_AVAIL_PAGE_SPAN
+          0x2 : PIDX_UPDATE_OVFL
+          0x3 : RX_TOO_MANY_CREDITS
+          0x4 : FENCED_CREDIT_RX
+          0x5 : VIRTIO_AVAIL_PAGE_SPAN
       - name: rsvd
         width: 3
       - name: cidx
@@ -278,12 +278,12 @@ regs:
         width: 1
       - name: ctxt_arb_req
         width: 5
-        enum_hex:
-          0 : EVT_SRC
-          1 : TRQ_SRC
-          2 : WBC_SRC
-          3 : CRD_SRC
-          4 : IND_SRC
+        enum:
+          0x0 : EVT_SRC
+          0x1 : TRQ_SRC
+          0x2 : WBC_SRC
+          0x3 : CRD_SRC
+          0x4 : IND_SRC
       - name: ctxt_arb_qid
         width: 12
       - name: ctxt_arb_dir
@@ -302,15 +302,15 @@ regs:
     fields:
       - name: select
         width: 3
-        enum_hex:
-          0 : TRQ_SRC_ENC
-          1 : WBC_SRC_ENC
-          2 : CRD_SRC_ENC
-          3 : IND_SRC_ENC
-          4 : EVT_SRC_ENC
-          5 : IMM_SRC_ENC
-          6 : RCP_SRC_ENC
-          7 : FEN_SRC_ENC
+        enum:
+          0x0 : TRQ_SRC_ENC
+          0x1 : WBC_SRC_ENC
+          0x2 : CRD_SRC_ENC
+          0x3 : IND_SRC_ENC
+          0x4 : EVT_SRC_ENC
+          0x5 : IMM_SRC_ENC
+          0x6 : RCP_SRC_ENC
+          0x7 : FEN_SRC_ENC
   - name: glbl_dsc_err_log2
     fields:
       - name: new_pidx
@@ -469,25 +469,25 @@ regs:
         width: 3
       - name: err_type
         width: 5
-        enum_hex:
-          0 : mty_mismatch
-          1 : len_mismatch
-          2 : qid_mismatch
-          3 : dec_rsp_error
-          4 : avl_ring_dsc_err
-          5 : eng_wpl_data_par_err
-          6 : msi_int_fail
-          7 : err_desc_cnt
-          8 : sh_cmpt_dsc_err
-          9 : port_id_ctxt_mismatch
-          a : wrb_inv_q_err
-          b : wrb_qfull_err
-          c : wrb_cidx_err
-          d : wrb_prty_err
-          e : hdr_ecc_uncorr_err
-          f : hdr_ecc_corr_err
-          10 : hdr_par_err
-          11 : wrb_port_id_err
+        enum:
+          0x0 : mty_mismatch
+          0x1 : len_mismatch
+          0x2 : qid_mismatch
+          0x3 : dec_rsp_error
+          0x4 : avl_ring_dsc_err
+          0x5 : eng_wpl_data_par_err
+          0x6 : msi_int_fail
+          0x7 : err_desc_cnt
+          0x8 : sh_cmpt_dsc_err
+          0x9 : port_id_ctxt_mismatch
+          0xa : wrb_inv_q_err
+          0xb : wrb_qfull_err
+          0xc : wrb_cidx_err
+          0xd : wrb_prty_err
+          0xe : hdr_ecc_uncorr_err
+          0xf : hdr_ecc_corr_err
+          0x10 : hdr_par_err
+          0x11 : wrb_port_id_err
   - name: stat_num_cmpt_in
   - name: stat_num_cmpt_out
   - name: stat_num_cmpt_drp
