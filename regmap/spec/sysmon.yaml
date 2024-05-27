@@ -182,9 +182,9 @@ regs:
       - name: alm6
       - name: rsvd
       - name: ref
-        enum_hex:
-          '0': external
-          '1': internal
+        enum:
+          0x0: external
+          0x1: internal
       - name: jtgr
       - name: jtgd
 

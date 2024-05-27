@@ -9,7 +9,6 @@ toplevel:
     0:
       name: bar0
       desc: DMA memory
-      offset: 0
       size: 0x00020000
       decoder:
         name: bar0
@@ -22,7 +21,6 @@ toplevel:
     2:
       name: bar2
       desc: all user logic
-      offset: 0
       size: 0x00400000
       decoder:
         name: bar2
