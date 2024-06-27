@@ -1,6 +1,6 @@
 set module_name ila_axi4s
 
-create_ip -name ila -vendor xilinx.com -library ip -module_name $module_name -dir . -force
+create_ip -name ila -vendor xilinx.com -library ip -module_name $module_name -dir ${ip_build_dir}
 
 set_property -dict [list \
     CONFIG.C_NUM_OF_PROBES {6}   \

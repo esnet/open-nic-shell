@@ -42,6 +42,7 @@ module box_322mhz #(
   input  [512*NUM_CMAC_PORT-1:0] s_axis_adap_tx_322mhz_tdata,
   input   [64*NUM_CMAC_PORT-1:0] s_axis_adap_tx_322mhz_tkeep,
   input      [NUM_CMAC_PORT-1:0] s_axis_adap_tx_322mhz_tlast,
+  input   [16*NUM_CMAC_PORT-1:0] s_axis_adap_tx_322mhz_tid,
   input      [NUM_CMAC_PORT-1:0] s_axis_adap_tx_322mhz_tuser_err,
   output     [NUM_CMAC_PORT-1:0] s_axis_adap_tx_322mhz_tready,
 
@@ -94,5 +95,31 @@ module box_322mhz #(
 
   `include "box_322mhz_address_map_inst.vh"
   `include "user_plugin_322mhz_inst.vh"
+
+  // ILA enable/disable
+  localparam bit ENABLE_ADAP_TX_ILA = 1'b0;
+  generate
+    if (ENABLE_ADAP_TX_ILA) begin
+      ila_axi4s ila_adap_tx_0 (
+        .clk(cmac_clk[0]),
+        .probe0(s_axis_adap_tx_322mhz_tdata[511:0]),
+        .probe1(s_axis_adap_tx_322mhz_tvalid[0]),
+        .probe2(s_axis_adap_tx_322mhz_tlast[0]),
+        .probe3(s_axis_adap_tx_322mhz_tkeep[63:0]),
+        .probe4(s_axis_adap_tx_322mhz_tready[0]),
+        .probe5({16'd0, s_axis_adap_tx_322mhz_tid[15:0]})
+      );
+
+      ila_axi4s ila_adap_tx_1 (
+        .clk(cmac_clk[1]),
+        .probe0(s_axis_adap_tx_322mhz_tdata[1023:512]),
+        .probe1(s_axis_adap_tx_322mhz_tvalid[1]),
+        .probe2(s_axis_adap_tx_322mhz_tlast[1]),
+        .probe3(s_axis_adap_tx_322mhz_tkeep[127:64]),
+        .probe4(s_axis_adap_tx_322mhz_tready[1]),
+        .probe5({16'd0, s_axis_adap_tx_322mhz_tid[31:16]})
+      );
+    end
+  endgenerate
 
 endmodule: box_322mhz

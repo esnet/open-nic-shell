@@ -388,6 +388,7 @@ module open_nic_shell #(
   wire [512*NUM_CMAC_PORT-1:0] axis_adap_tx_322mhz_tdata;
   wire  [64*NUM_CMAC_PORT-1:0] axis_adap_tx_322mhz_tkeep;
   wire     [NUM_CMAC_PORT-1:0] axis_adap_tx_322mhz_tlast;
+  wire  [16*NUM_CMAC_PORT-1:0] axis_adap_tx_322mhz_tid;
   wire     [NUM_CMAC_PORT-1:0] axis_adap_tx_322mhz_tuser_err;
   wire     [NUM_CMAC_PORT-1:0] axis_adap_tx_322mhz_tready;
 
@@ -860,6 +861,7 @@ module open_nic_shell #(
       .m_axis_tx_tdata      (axis_adap_tx_322mhz_tdata[`getvec(512, i)]),
       .m_axis_tx_tkeep      (axis_adap_tx_322mhz_tkeep[`getvec(64, i)]),
       .m_axis_tx_tlast      (axis_adap_tx_322mhz_tlast[i]),
+      .m_axis_tx_tid        (axis_adap_tx_322mhz_tid[`getvec(16, i)]),
       .m_axis_tx_tuser_err  (axis_adap_tx_322mhz_tuser_err[i]),
       .m_axis_tx_tready     (axis_adap_tx_322mhz_tready[i]),
 
@@ -1066,6 +1068,7 @@ module open_nic_shell #(
     .s_axis_adap_tx_322mhz_tdata     (axis_adap_tx_322mhz_tdata),
     .s_axis_adap_tx_322mhz_tkeep     (axis_adap_tx_322mhz_tkeep),
     .s_axis_adap_tx_322mhz_tlast     (axis_adap_tx_322mhz_tlast),
+    .s_axis_adap_tx_322mhz_tid       (axis_adap_tx_322mhz_tid),
     .s_axis_adap_tx_322mhz_tuser_err (axis_adap_tx_322mhz_tuser_err),
     .s_axis_adap_tx_322mhz_tready    (axis_adap_tx_322mhz_tready),
 

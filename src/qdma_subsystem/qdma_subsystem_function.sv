@@ -87,6 +87,7 @@ module qdma_subsystem_function #(
   localparam C_QID_FIFO_DEPTH = C_PKT_FIFO_DEPTH; 
 
   // ILA enable/disable
+  localparam bit ENABLE_H2C_0_ILA = 1'b0;
   localparam bit ENABLE_C2H_0_ILA = 1'b0;
   localparam bit ENABLE_C2H_1_ILA = 1'b0;
 
@@ -106,6 +107,7 @@ module qdma_subsystem_function #(
   wire   [63:0] axis_h2c_tkeep;
   wire          axis_h2c_tlast;
   wire   [15:0] axis_h2c_tuser_size;
+  wire   [10:0] axis_h2c_tuser_qid;
   wire          axis_h2c_tready;
 
   wire          axis_c2h_tvalid;
@@ -231,6 +233,7 @@ module qdma_subsystem_function #(
   assign axis_h2c_tdata      = s_axis_h2c_tdata;
   assign axis_h2c_tlast      = s_axis_h2c_tlast;
   assign axis_h2c_tuser_size = s_axis_h2c_tuser_size;
+  assign axis_h2c_tuser_qid  = s_axis_h2c_tuser_qid;
   assign s_axis_h2c_tready   = axis_h2c_tready && h2c_match && bus_ready;
 
   generate if (QDMA_ID == 0) begin
@@ -238,14 +241,14 @@ module qdma_subsystem_function #(
     // following portion if later TSO/GSO is to be implemented.
     axi_stream_register_slice #(
       .TDATA_W (512),
-      .TUSER_W (16),
+      .TUSER_W (11+16),
       .MODE    ("full")
     ) h2c_slice_inst (
       .s_axis_tvalid (axis_h2c_tvalid),
       .s_axis_tdata  (axis_h2c_tdata),
       .s_axis_tkeep  (axis_h2c_tkeep),
       .s_axis_tlast  (axis_h2c_tlast),
-      .s_axis_tuser  (axis_h2c_tuser_size),
+      .s_axis_tuser  ({axis_h2c_tuser_qid, axis_h2c_tuser_size}),
       .s_axis_tid    (0),
       .s_axis_tdest  (0),
       .s_axis_tready (axis_h2c_tready),
@@ -254,7 +257,7 @@ module qdma_subsystem_function #(
       .m_axis_tdata  (m_axis_h2c_tdata),
       .m_axis_tkeep  (m_axis_h2c_tkeep),
       .m_axis_tlast  (m_axis_h2c_tlast),
-      .m_axis_tuser  (m_axis_h2c_tuser_size),
+      .m_axis_tuser  ({m_axis_h2c_tuser_src[10:0], m_axis_h2c_tuser_size}),
       .m_axis_tid    (),
       .m_axis_tdest  (),
       .m_axis_tready (m_axis_h2c_tready),
@@ -291,8 +294,25 @@ module qdma_subsystem_function #(
   end
   endgenerate
 
-  assign m_axis_h2c_tuser_src = 16'h1 << FUNC_ID;
+  assign m_axis_h2c_tuser_src[11]  = 1'b0;       // note: bits 10:0 connected to h2c_slice_inst above.
+  assign m_axis_h2c_tuser_src[15:12] = FUNC_ID;
   assign m_axis_h2c_tuser_dst = 0;
+
+  generate
+    if (ENABLE_H2C_0_ILA) begin : g__h2c_0_ila
+      ila_axi4s ila_axi4s_h2c_0 (
+        .clk(axis_aclk),
+        .probe0(m_axis_h2c_tdata),
+        .probe1(m_axis_h2c_tvalid),
+        .probe2(m_axis_h2c_tlast),
+        .probe3(m_axis_h2c_tkeep),
+        .probe4(m_axis_h2c_tready),
+        .probe5({m_axis_h2c_tuser_size,
+                 m_axis_h2c_tuser_src})
+      );
+    end : g__h2c_0_ila
+  endgenerate
+
 
   // ==========
   // RX path
@@ -355,7 +375,7 @@ module qdma_subsystem_function #(
 
   generate
     if (ENABLE_C2H_0_ILA) begin : g__c2h_0_ila
-      ila_axi4s ila_axi4s_0 (
+      ila_axi4s ila_axi4s_c2h_0 (
         .clk(axis_aclk),
         .probe0(axis_c2h_tdata),
         .probe1(axis_c2h_tvalid),
@@ -369,8 +389,8 @@ module qdma_subsystem_function #(
     end : g__c2h_0_ila
   endgenerate
 
-  wire [6:0] rss_hash;
-  assign rss_hash = axis_c2h_tuser_rss_hash_valid ? axis_c2h_tuser_rss_hash[6:0] : 0;
+  wire [11:0] rss_hash;
+  assign rss_hash = axis_c2h_tuser_rss_hash_valid ? axis_c2h_tuser_rss_hash : 0;
 
   // Using the selected hash, look up a virtual queue ID in the RSS indirection
   // table, which is then converted into a physical queue ID.  The physical
@@ -383,7 +403,8 @@ module qdma_subsystem_function #(
     end
     else if (axis_c2h_tvalid && axis_c2h_tready && axis_c2h_tlast) begin
       qid_fifo_wr_en <= 1'b1;
-      qid_fifo_din   <= indir_table[`getvec(16, rss_hash[6:0])] + q_base;
+//      qid_fifo_din   <= indir_table[`getvec(16, rss_hash[6:0])] + q_base;
+      qid_fifo_din   <= rss_hash;
     end
     else begin
       qid_fifo_wr_en <= 1'b0;
@@ -488,7 +509,7 @@ module qdma_subsystem_function #(
 
   generate
     if (ENABLE_C2H_1_ILA) begin : g__c2h_1_ila
-      ila_axi4s ila_axi4s_1 (
+      ila_axi4s ila_axi4s_c2h_1 (
         .clk(axis_aclk),
         .probe0(m_axis_c2h_tdata),
         .probe1(m_axis_c2h_tvalid),
