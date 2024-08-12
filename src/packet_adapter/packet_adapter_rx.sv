@@ -27,8 +27,8 @@ module packet_adapter_rx #(
   input   [63:0] s_axis_rx_tkeep,
   input          s_axis_rx_tlast,
   input          s_axis_rx_tuser_err,
-  input          s_axis_rx_tuser_rss_hash_valid,
-  input   [11:0] s_axis_rx_tuser_rss_hash,
+  input          s_axis_rx_tuser_qid_valid,
+  input   [11:0] s_axis_rx_tuser_qid,
   output         s_axis_rx_tready,
 
   output         m_axis_rx_tvalid,
@@ -38,8 +38,8 @@ module packet_adapter_rx #(
   output  [15:0] m_axis_rx_tuser_size,
   output  [15:0] m_axis_rx_tuser_src,
   output  [15:0] m_axis_rx_tuser_dst,
-  output         m_axis_rx_tuser_rss_hash_valid,
-  output  [11:0] m_axis_rx_tuser_rss_hash,
+  output         m_axis_rx_tuser_qid_valid,
+  output  [11:0] m_axis_rx_tuser_qid,
   input          m_axis_rx_tready,
 
   // Synchronized to axis_aclk (250MHz)
@@ -71,8 +71,8 @@ module packet_adapter_rx #(
   wire  [63:0] axis_buf_tkeep;
   wire         axis_buf_tlast;
   wire         axis_buf_tuser_err;
-  wire         axis_buf_tuser_rss_hash_valid;
-  wire  [11:0] axis_buf_tuser_rss_hash;
+  wire         axis_buf_tuser_qid_valid;
+  wire  [11:0] axis_buf_tuser_qid;
   wire         axis_buf_tready;
 
   axi_stream_register_slice #(
@@ -86,8 +86,8 @@ module packet_adapter_rx #(
     .s_axis_tlast     (s_axis_rx_tlast),
     .s_axis_tid       (0),
     .s_axis_tdest     (0),
-    .s_axis_tuser     ({s_axis_rx_tuser_rss_hash,
-                        s_axis_rx_tuser_rss_hash_valid,
+    .s_axis_tuser     ({s_axis_rx_tuser_qid,
+                        s_axis_rx_tuser_qid_valid,
                         s_axis_rx_tuser_err}),
     .s_axis_tready    (s_axis_rx_tready),
     
@@ -97,8 +97,8 @@ module packet_adapter_rx #(
     .m_axis_tlast     (axis_buf_tlast),
     .m_axis_tid       (),
     .m_axis_tdest     (),
-    .m_axis_tuser     ({axis_buf_tuser_rss_hash,
-                        axis_buf_tuser_rss_hash_valid,
+    .m_axis_tuser     ({axis_buf_tuser_qid,
+                        axis_buf_tuser_qid_valid,
                         axis_buf_tuser_err}),
     .m_axis_tready    (axis_buf_tready),
 
@@ -190,8 +190,8 @@ module packet_adapter_rx #(
     .s_axis_tlast      (axis_buf_tlast),
     .s_axis_tid        (0),
     .s_axis_tdest      (0),
-    .s_axis_tuser      ({axis_buf_tuser_rss_hash,
-                         axis_buf_tuser_rss_hash_valid}),
+    .s_axis_tuser      ({axis_buf_tuser_qid,
+                         axis_buf_tuser_qid_valid}),
     .s_axis_tready     (axis_buf_tready),
 
     .drop              (drop),
@@ -203,8 +203,8 @@ module packet_adapter_rx #(
     .m_axis_tlast      (m_axis_rx_tlast),
     .m_axis_tid        (),
     .m_axis_tdest      (),
-    .m_axis_tuser      ({m_axis_rx_tuser_rss_hash,
-                         m_axis_rx_tuser_rss_hash_valid}),
+    .m_axis_tuser      ({m_axis_rx_tuser_qid,
+                         m_axis_rx_tuser_qid_valid}),
     .m_axis_tuser_size (m_axis_rx_tuser_size),
     .m_axis_tready     (m_axis_rx_tready),
 
