@@ -36,13 +36,13 @@
 // --------------------------------------------------
 //    0x12000  |  0x16FFF  |  QDMA subsystem #1
 // --------------------------------------------------
-//   0x100000  |  0x1FFFFF |  Box0 @ 250MHz
+//    0x20000  |  0x20FFF  |  QSPI
 // --------------------------------------------------
-//   0x200000  |  0x2FFFFF |  Box1 @ 322MHz
+//    0x40000  |  0x7FFFF  |  Card Management System
 // --------------------------------------------------
-//   0x300000  |  0x33FFFF |  Card Management System
+//    0x80000  |  0xFFFFF  |  Box0 @ 250MHz
 // --------------------------------------------------
-//   0x340000  |  0x340FFF |  QSPI
+//   0x200000  |  0x3FFFFF |  Box1 @ 322MHz
 // --------------------------------------------------
 
 `include "open_nic_shell_macros.vh"
@@ -241,23 +241,23 @@ module system_config_address_map #(
   localparam C_ADAP1_INDEX = 5;
   localparam C_SMON_INDEX  = 6;
   localparam C_QDMA1_INDEX = 7;
-  localparam C_BOX1_INDEX  = 8;
-  localparam C_BOX0_INDEX  = 9;
-  localparam C_CMS_INDEX   = 10;
-  localparam C_QSPI_INDEX  = 11;
+  localparam C_QSPI_INDEX  = 8;
+  localparam C_CMS_INDEX   = 9;
+  localparam C_BOX0_INDEX  = 10;
+  localparam C_BOX1_INDEX  = 11;
 
   localparam C_SCFG_BASE_ADDR  = 32'h0;
   localparam C_QDMA0_BASE_ADDR = 32'h01000;
-  localparam C_QDMA1_BASE_ADDR = 32'h12000;
   localparam C_CMAC0_BASE_ADDR = 32'h08000;
   localparam C_ADAP0_BASE_ADDR = 32'h0B000;
   localparam C_CMAC1_BASE_ADDR = 32'h0C000;
   localparam C_ADAP1_BASE_ADDR = 32'h0F000;
-  localparam C_SMON_BASE_ADDR  = 32'h10000;  // 14 bits
-  localparam C_BOX1_BASE_ADDR  = 32'h200000; // 20 bits
-  localparam C_BOX0_BASE_ADDR  = 32'h100000; // 20 bits
-  localparam C_CMS_BASE_ADDR   = 32'h300000; // 18 bits
-  localparam C_QSPI_BASE_ADDR  = 32'h340000; // 12 bits
+  localparam C_SMON_BASE_ADDR  = 32'h10000;  // 13 bits
+  localparam C_QDMA1_BASE_ADDR = 32'h12000;
+  localparam C_QSPI_BASE_ADDR  = 32'h20000;  // 12 bits
+  localparam C_CMS_BASE_ADDR   = 32'h40000;  // 18 bits
+  localparam C_BOX0_BASE_ADDR  = 32'h80000;  // 19 bits
+  localparam C_BOX1_BASE_ADDR  = 32'h200000; // 21 bits
 
   wire                [31:0] axil_scfg_awaddr;
   wire                [31:0] axil_scfg_araddr;
