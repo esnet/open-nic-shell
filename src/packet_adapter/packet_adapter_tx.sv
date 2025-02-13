@@ -34,6 +34,7 @@ module packet_adapter_tx #(
   output         [511:0] m_axis_tx_tdata,
   output          [63:0] m_axis_tx_tkeep,
   output                 m_axis_tx_tlast,
+  output          [15:0] m_axis_tx_tid,
   output                 m_axis_tx_tuser_err,
   input                  m_axis_tx_tready,
 
@@ -147,6 +148,7 @@ module packet_adapter_tx #(
     .FIFO_DEPTH       (C_FIFO_DEPTH),
     .FIFO_MEMORY_TYPE ("auto"),
     .RELATED_CLOCKS   (0),
+    .TID_WIDTH        (16),
     .TDATA_WIDTH      (512)
   ) tx_cdc_fifo_inst (
     .s_axis_tvalid      (axis_tx_tvalid && ~dropping),
@@ -155,7 +157,7 @@ module packet_adapter_tx #(
     .s_axis_tstrb       ({64{1'b1}}),
     .s_axis_tlast       (axis_tx_tlast),
     .s_axis_tuser       (0),
-    .s_axis_tid         (0),
+    .s_axis_tid         (axis_tx_tuser_src),
     .s_axis_tdest       (0),
     .s_axis_tready      (axis_tx_tready),
 
@@ -165,7 +167,7 @@ module packet_adapter_tx #(
     .m_axis_tstrb       (),
     .m_axis_tlast       (m_axis_tx_tlast),
     .m_axis_tuser       (),
-    .m_axis_tid         (),
+    .m_axis_tid         (m_axis_tx_tid),
     .m_axis_tdest       (),
     .m_axis_tready      (m_axis_tx_tready),
 

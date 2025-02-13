@@ -49,8 +49,8 @@ module p2p_322mhz #(
   output  [64*NUM_CMAC_PORT-1:0] m_axis_adap_rx_322mhz_tkeep,
   output     [NUM_CMAC_PORT-1:0] m_axis_adap_rx_322mhz_tlast,
   output     [NUM_CMAC_PORT-1:0] m_axis_adap_rx_322mhz_tuser_err,
-  output     [NUM_CMAC_PORT-1:0] m_axis_adap_rx_322mhz_tuser_rss_hash_valid,
-  output  [12*NUM_CMAC_PORT-1:0] m_axis_adap_rx_322mhz_tuser_rss_hash,
+  output     [NUM_CMAC_PORT-1:0] m_axis_adap_rx_322mhz_tuser_qid_valid,
+  output  [12*NUM_CMAC_PORT-1:0] m_axis_adap_rx_322mhz_tuser_qid,
 
   output     [NUM_CMAC_PORT-1:0] m_axis_cmac_tx_tvalid,
   output [512*NUM_CMAC_PORT-1:0] m_axis_cmac_tx_tdata,
@@ -87,8 +87,8 @@ module p2p_322mhz #(
   wire  [64*NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tkeep;
   wire     [NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tlast;
   wire     [NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tuser_err;
-  wire     [NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tuser_rss_hash_valid;
-  wire  [12*NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tuser_rss_hash;
+  wire     [NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tuser_qid_valid;
+  wire  [12*NUM_CMAC_PORT-1:0] axis_adap_rx_322mhz_tuser_qid;
 
   generic_reset #(
     .NUM_INPUT_CLK  (1 + NUM_CMAC_PORT),
@@ -200,8 +200,8 @@ module p2p_322mhz #(
       .m_axis_tlast  (axis_adap_rx_322mhz_tlast[i]),
       .m_axis_tid    (),
       .m_axis_tdest  (),
-      .m_axis_tuser  ({axis_adap_rx_322mhz_tuser_rss_hash[`getvec(12, i)],
-                       axis_adap_rx_322mhz_tuser_rss_hash_valid[i],
+      .m_axis_tuser  ({axis_adap_rx_322mhz_tuser_qid[`getvec(12, i)],
+                       axis_adap_rx_322mhz_tuser_qid_valid[i],
                        axis_adap_rx_322mhz_tuser_err[i]}),
       .m_axis_tready (1'b1),
 
@@ -220,8 +220,8 @@ module p2p_322mhz #(
       .s_axis_tlast  (axis_adap_rx_322mhz_tlast[i]),
       .s_axis_tid    (0),
       .s_axis_tdest  (0),
-      .s_axis_tuser  ({axis_adap_rx_322mhz_tuser_rss_hash[`getvec(12, i)],
-                       axis_adap_rx_322mhz_tuser_rss_hash_valid[i],
+      .s_axis_tuser  ({axis_adap_rx_322mhz_tuser_qid[`getvec(12, i)],
+                       axis_adap_rx_322mhz_tuser_qid_valid[i],
                        axis_adap_rx_322mhz_tuser_err[i]}),
       .s_axis_tready (),
 
@@ -231,8 +231,8 @@ module p2p_322mhz #(
       .m_axis_tlast  (m_axis_adap_rx_322mhz_tlast[i]),
       .m_axis_tid    (),
       .m_axis_tdest  (),
-      .m_axis_tuser  ({m_axis_adap_rx_322mhz_tuser_rss_hash[`getvec(12, i)],
-                       m_axis_adap_rx_322mhz_tuser_rss_hash_valid[i],
+      .m_axis_tuser  ({m_axis_adap_rx_322mhz_tuser_qid[`getvec(12, i)],
+                       m_axis_adap_rx_322mhz_tuser_qid_valid[i],
                        m_axis_adap_rx_322mhz_tuser_err[i]}),
       .m_axis_tready (1'b1),
 
