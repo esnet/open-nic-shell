@@ -211,6 +211,29 @@ module qdma_subsystem_qdma_wrapper #(
   wire        dsc_crdt_in_fence;
   wire        dsc_crdt_in_rdy;
 
+  wire [7:0] usr_flr_fnc;
+  wire       usr_flr_set;
+  reg  [7:0] usr_flr_done_fnc[0:3];
+  reg        usr_flr_done_vld[0:3];
+
+  wire [54:0] qdma_axil_awuser, qdma_axil_aruser;
+
+  generate
+    if (0) begin : g__ila  // set to 1 to enable ILA.
+      ila_axi4s ila_axi4s_h2c_0 (
+        .clk(axis_aclk),
+        .probe0({0, qdma_axil_awuser} ),
+        .probe1(    qdma_axil_awvalid ),
+        .probe2(    qdma_axil_arvalid ),
+        .probe3({0, qdma_axil_aruser} ),
+        .probe4(    aresetn           ),
+        .probe5({0, usr_flr_set,
+                    usr_flr_fnc}      )
+      );
+    end : g__ila
+  endgenerate
+
+
   assign axis_aclk = aclk_250mhz;
 
   // Generate 125MHz 'axil_aclk' and 100MHz 'ref_clk_100mhz'.
@@ -230,7 +253,7 @@ module qdma_subsystem_qdma_wrapper #(
   // Convert the 250MHz QDMA output AXI-Lite interface to a 125MHz one
   qdma_subsystem_axi_cdc axi_cdc_inst (
     .s_axi_awvalid (qdma_axil_awvalid),
-    .s_axi_awaddr  (qdma_axil_awaddr),
+    .s_axi_awaddr  ({10'h000, qdma_axil_awaddr[21:0]}),  // aliases lower 4M addresses across full address space.
     .s_axi_awprot  (0),
     .s_axi_awready (qdma_axil_awready),
     .s_axi_wvalid  (qdma_axil_wvalid),
@@ -241,7 +264,7 @@ module qdma_subsystem_qdma_wrapper #(
     .s_axi_bresp   (qdma_axil_bresp),
     .s_axi_bready  (qdma_axil_bready),
     .s_axi_arvalid (qdma_axil_arvalid),
-    .s_axi_araddr  (qdma_axil_araddr),
+    .s_axi_araddr  ({10'h000, qdma_axil_araddr[21:0]}),  // aliases lower 4M addresses across full address space.
     .s_axi_arprot  (0),
     .s_axi_arready (qdma_axil_arready),
     .s_axi_rvalid  (qdma_axil_rvalid),
@@ -287,8 +310,21 @@ module qdma_subsystem_qdma_wrapper #(
   assign dsc_crdt_in_dir   = 1'b0;
   assign dsc_crdt_in_fence = 1'b0;
 
+  // Instantiate usr_flr pipeline
+  always @(posedge axis_aclk) begin
+    usr_flr_done_fnc[3] <= usr_flr_fnc;
+    usr_flr_done_fnc[2] <= usr_flr_done_fnc[3];
+    usr_flr_done_fnc[1] <= usr_flr_done_fnc[2];
+    usr_flr_done_fnc[0] <= usr_flr_done_fnc[1];
+
+    usr_flr_done_vld[3] <= usr_flr_set;
+    usr_flr_done_vld[2] <= usr_flr_done_vld[3];
+    usr_flr_done_vld[1] <= usr_flr_done_vld[2];
+    usr_flr_done_vld[0] <= usr_flr_done_vld[1];
+  end
+
   generate if (QDMA_ID == 0) begin
-    qdma_no_sriov qdma_inst (
+    qdma_sriov qdma_inst (
       .pci_exp_rxp                          (pcie_rxp),
       .pci_exp_rxn                          (pcie_rxn),
       .pci_exp_txp                          (pcie_txp),
@@ -304,7 +340,7 @@ module qdma_subsystem_qdma_wrapper #(
 
       .m_axil_awvalid                       (qdma_axil_awvalid),
       .m_axil_awaddr                        (qdma_axil_awaddr),
-      .m_axil_awuser                        (),
+      .m_axil_awuser                        (qdma_axil_awuser),
       .m_axil_awprot                        (),
       .m_axil_awready                       (qdma_axil_awready),
       .m_axil_wvalid                        (qdma_axil_wvalid),
@@ -316,7 +352,7 @@ module qdma_subsystem_qdma_wrapper #(
       .m_axil_bready                        (qdma_axil_bready),
       .m_axil_arvalid                       (qdma_axil_arvalid),
       .m_axil_araddr                        (qdma_axil_araddr),
-      .m_axil_aruser                        (),
+      .m_axil_aruser                        (qdma_axil_aruser),
       .m_axil_arprot                        (),
       .m_axil_arready                       (qdma_axil_arready),
       .m_axil_rvalid                        (qdma_axil_rvalid),
@@ -378,6 +414,11 @@ module qdma_subsystem_qdma_wrapper #(
       .usr_irq_in_fnc                       (usr_irq_in_fnc),
       .usr_irq_out_ack                      (usr_irq_out_ack),
       .usr_irq_out_fail                     (usr_irq_out_fail),
+
+      .usr_flr_fnc                          (usr_flr_fnc),
+      .usr_flr_set                          (usr_flr_set),
+      .usr_flr_done_fnc                     (usr_flr_done_fnc[0]),
+      .usr_flr_done_vld                     (usr_flr_done_vld[0]),
 
       .tm_dsc_sts_vld                       (tm_dsc_sts_vld),
       .tm_dsc_sts_port_id                   (tm_dsc_sts_port_id),
