@@ -30,13 +30,13 @@ set_property -dict {
     CONFIG.pf3_pciebar2axibar_2 {0x0000000000000000}
     CONFIG.dma_reset_source_sel {Phy_Ready}
     CONFIG.pf0_bar2_scale_qdma {Megabytes}
-    CONFIG.pf0_bar2_size_qdma {4}
+    CONFIG.pf0_bar2_size_qdma {8}
     CONFIG.pf1_bar2_scale_qdma {Megabytes}
-    CONFIG.pf1_bar2_size_qdma {4}
+    CONFIG.pf1_bar2_size_qdma {8}
     CONFIG.pf2_bar2_scale_qdma {Megabytes}
-    CONFIG.pf2_bar2_size_qdma {4}
+    CONFIG.pf2_bar2_size_qdma {8}
     CONFIG.pf3_bar2_scale_qdma {Megabytes}
-    CONFIG.pf3_bar2_size_qdma {4}
+    CONFIG.pf3_bar2_size_qdma {8}
     CONFIG.PF0_MSIX_CAP_TABLE_SIZE_qdma {007}
     CONFIG.PF1_MSIX_CAP_TABLE_SIZE_qdma {007}
     CONFIG.PF2_MSIX_CAP_TABLE_SIZE_qdma {007}
@@ -54,7 +54,7 @@ set_property -dict {
     CONFIG.pf0_sub_class_interface_menu_qdma {Other_network_controller}
     CONFIG.pf0_class_code_qdma {028000}
     CONFIG.pf0_sriov_bar2_scale {Megabytes}
-    CONFIG.pf0_sriov_bar2_size {4}
+    CONFIG.pf0_sriov_bar2_size {8}
     CONFIG.pf0_vf_pciebar2axibar_2 {0x0000000000000000}
     CONFIG.pf1_base_class_menu_qdma {Network_controller}
     CONFIG.pf1_class_code_base_qdma {02}
@@ -62,7 +62,7 @@ set_property -dict {
     CONFIG.pf1_sub_class_interface_menu_qdma {Other_network_controller}
     CONFIG.pf1_class_code_qdma {028000}
     CONFIG.pf1_sriov_bar2_scale {Megabytes}
-    CONFIG.pf1_sriov_bar2_size {4}
+    CONFIG.pf1_sriov_bar2_size {8}
     CONFIG.pf1_vf_pciebar2axibar_2 {0x0000000000000000}
 } [get_ips $qdma]
 set_property CONFIG.tl_pf_enable_reg $num_phys_func [get_ips $qdma]

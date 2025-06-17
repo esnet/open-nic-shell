@@ -253,7 +253,7 @@ module qdma_subsystem_qdma_wrapper #(
   // Convert the 250MHz QDMA output AXI-Lite interface to a 125MHz one
   qdma_subsystem_axi_cdc axi_cdc_inst (
     .s_axi_awvalid (qdma_axil_awvalid),
-    .s_axi_awaddr  ({10'h000, qdma_axil_awaddr[21:0]}),  // aliases lower 4M addresses across full address space.
+    .s_axi_awaddr  ({9'h000, qdma_axil_awaddr[22:0]}),  // aliases lower 8M addresses across full address space.
     .s_axi_awprot  (0),
     .s_axi_awready (qdma_axil_awready),
     .s_axi_wvalid  (qdma_axil_wvalid),
@@ -264,7 +264,7 @@ module qdma_subsystem_qdma_wrapper #(
     .s_axi_bresp   (qdma_axil_bresp),
     .s_axi_bready  (qdma_axil_bready),
     .s_axi_arvalid (qdma_axil_arvalid),
-    .s_axi_araddr  ({10'h000, qdma_axil_araddr[21:0]}),  // aliases lower 4M addresses across full address space.
+    .s_axi_araddr  ({9'h000, qdma_axil_araddr[22:0]}),  // aliases lower 8M addresses across full address space.
     .s_axi_arprot  (0),
     .s_axi_arready (qdma_axil_arready),
     .s_axi_rvalid  (qdma_axil_rvalid),
