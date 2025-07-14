@@ -19,4 +19,5 @@ set ips {
     axi_stream_pipeline
     axi_lite_clock_converter
     ila_axi4s
+    pcie_vio
 }

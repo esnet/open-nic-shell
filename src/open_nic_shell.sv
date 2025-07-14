@@ -227,10 +227,23 @@ module open_nic_shell #(
   wire     [NUM_QDMA-1:0] axil_pcie_rready;
 
   wire     [NUM_QDMA-1:0] pcie_rstn_int;
+
+  wire     [NUM_QDMA-1:0] __pcie_rstn_int;
+  wire                    jtag_rst;
+
   generate for (genvar i = 0; i < NUM_QDMA; i++) begin
-    IBUF pcie_rstn_ibuf_inst (.I(pcie_rstn[i]), .O(pcie_rstn_int[i]));
+    IBUF pcie_rstn_ibuf_inst (.I(pcie_rstn[i]), .O(__pcie_rstn_int[i]));
+    assign pcie_rstn_int[i] = __pcie_rstn_int[i] && !jtag_rst;
   end
   endgenerate
+
+  pcie_vio pcie_vio_inst (
+    .clk        (ref_clk_100mhz),
+    .probe_in0  (__pcie_rstn_int[0]),
+    .probe_in1  (pcie_rstn_int[0]),
+    .probe_out0 (jtag_rst) // Active-high
+  );
+
   
 // Fix the CATTRIP issue for AU280, AU50, AU55C and AU55N custom flow
 //
