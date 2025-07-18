@@ -29,12 +29,28 @@ set_property -dict {
     CONFIG.pf2_pciebar2axibar_2 {0x0000000000000000}
     CONFIG.pf3_pciebar2axibar_2 {0x0000000000000000}
     CONFIG.dma_reset_source_sel {Phy_Ready}
+    CONFIG.pf0_bar0_prefetchable_qdma {false}
+    CONFIG.pf0_sriov_bar0_prefetchable {false}
+    CONFIG.pf0_bar2_prefetchable_qdma {false}
+    CONFIG.pf0_sriov_bar2_prefetchable {false}
     CONFIG.pf0_bar2_scale_qdma {Megabytes}
     CONFIG.pf0_bar2_size_qdma {8}
+    CONFIG.pf1_bar0_prefetchable_qdma {false}
+    CONFIG.pf1_sriov_bar0_prefetchable {false}
+    CONFIG.pf1_bar2_prefetchable_qdma {false}
+    CONFIG.pf1_sriov_bar2_prefetchable {false}
     CONFIG.pf1_bar2_scale_qdma {Megabytes}
     CONFIG.pf1_bar2_size_qdma {8}
+    CONFIG.pf2_bar0_prefetchable_qdma {false}
+    CONFIG.pf2_sriov_bar0_prefetchable {false}
+    CONFIG.pf2_bar2_prefetchable_qdma {false}
+    CONFIG.pf2_sriov_bar2_prefetchable {false}
     CONFIG.pf2_bar2_scale_qdma {Megabytes}
     CONFIG.pf2_bar2_size_qdma {8}
+    CONFIG.pf3_bar0_prefetchable_qdma {false}
+    CONFIG.pf3_sriov_bar0_prefetchable {false}
+    CONFIG.pf3_bar2_prefetchable_qdma {false}
+    CONFIG.pf3_sriov_bar2_prefetchable {false}
     CONFIG.pf3_bar2_scale_qdma {Megabytes}
     CONFIG.pf3_bar2_size_qdma {8}
     CONFIG.PF0_MSIX_CAP_TABLE_SIZE_qdma {007}
