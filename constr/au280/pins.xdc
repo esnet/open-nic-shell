@@ -43,3 +43,5 @@ set_property -dict {PACKAGE_PIN J29 IOSTANDARD LVCMOS18} [get_ports satellite_gp
 set_property -dict {PACKAGE_PIN K29 IOSTANDARD LVCMOS18} [get_ports satellite_gpio[2]]
 set_property -dict {PACKAGE_PIN J31 IOSTANDARD LVCMOS18} [get_ports satellite_gpio[3]]
 
+set_property -dict {PACKAGE_PIN G31 IOSTANDARD LVDS dqs_bias TRUE} [get_ports sys_clk_3_p]
+set_property -dict {PACKAGE_PIN F31 IOSTANDARD LVDS dqs_bias TRUE} [get_ports sys_clk_3_n]

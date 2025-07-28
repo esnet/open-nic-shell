@@ -33,6 +33,8 @@ module open_nic_shell #(
 `ifdef __au280__
   output                         hbm_cattrip,
   input                    [3:0] satellite_gpio,
+  input                          sys_clk_3_p,
+  input                          sys_clk_3_n,
 `elsif __au50__
   output                         hbm_cattrip,
   input                    [1:0] satellite_gpio,
@@ -42,6 +44,8 @@ module open_nic_shell #(
 `elsif __au55c__
   output                         hbm_cattrip,
   input                    [3:0] satellite_gpio,
+  input                          sys_clk_3_p,
+  input                          sys_clk_3_n,
 `elsif __au200__
   output                   [1:0] qsfp_resetl, 
   input                    [1:0] qsfp_modprsl,
@@ -227,10 +231,34 @@ module open_nic_shell #(
   wire     [NUM_QDMA-1:0] axil_pcie_rready;
 
   wire     [NUM_QDMA-1:0] pcie_rstn_int;
+
+  wire     [NUM_QDMA-1:0] __pcie_rstn_int;
+  wire                    jtag_rst;
+
+  wire                    sys_clk_100mhz;
+
   generate for (genvar i = 0; i < NUM_QDMA; i++) begin
-    IBUF pcie_rstn_ibuf_inst (.I(pcie_rstn[i]), .O(pcie_rstn_int[i]));
+    IBUF pcie_rstn_ibuf_inst (.I(pcie_rstn[i]), .O(__pcie_rstn_int[i]));
+    assign pcie_rstn_int[i] = __pcie_rstn_int[i] && !jtag_rst;
   end
   endgenerate
+
+// 100MHz SYS_CLK (free-running)
+`ifdef __au280__
+  IBUFDS sys_clk_ibuf_inst (.I(sys_clk_3_p), .IB(sys_clk_3_n), .O(sys_clk_100mhz));
+`elsif __au55c__
+  IBUFDS sys_clk_ibuf_inst (.I(sys_clk_3_p), .IB(sys_clk_3_n), .O(sys_clk_100mhz));
+`else
+  assign sys_clk_100mhz = ref_clk_100mhz;
+`endif
+
+  pcie_vio pcie_vio_inst (
+    .clk        (sys_clk_100mhz),
+    .probe_in0  (__pcie_rstn_int[0]),
+    .probe_in1  (pcie_rstn_int[0]),
+    .probe_out0 (jtag_rst) // Active-high
+  );
+
   
 // Fix the CATTRIP issue for AU280, AU50, AU55C and AU55N custom flow
 //

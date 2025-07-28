@@ -57,3 +57,6 @@ set_property -dict {PACKAGE_PIN BE46 IOSTANDARD LVCMOS18} [get_ports satellite_g
 set_property -dict {PACKAGE_PIN BH46 IOSTANDARD LVCMOS18} [get_ports satellite_gpio[1]]
 set_property -dict {PACKAGE_PIN BF45 IOSTANDARD LVCMOS18} [get_ports satellite_gpio[2]]
 set_property -dict {PACKAGE_PIN BF46 IOSTANDARD LVCMOS18} [get_ports satellite_gpio[3]]
+
+set_property -dict {PACKAGE_PIN BK43 IOSTANDARD LVDS dqs_bias TRUE} [get_ports sys_clk_3_p]
+set_property -dict {PACKAGE_PIN BK44 IOSTANDARD LVDS dqs_bias TRUE} [get_ports sys_clk_3_n]
