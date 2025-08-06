@@ -16,7 +16,7 @@
 #
 # *************************************************************************
 set ips {
-    qdma_no_sriov
+    qdma_sriov
     qdma_subsystem_clk_div
     qdma_subsystem_axi_cdc
     qdma_subsystem_axi_crossbar

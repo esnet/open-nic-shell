@@ -1,0 +1,86 @@
+# *************************************************************************
+#
+# Copyright 2020 Xilinx, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# *************************************************************************
+set qdma qdma_sriov
+create_ip -name qdma -vendor xilinx.com -library ip -module_name $qdma -dir ${ip_build_dir}
+set_property -dict {
+    CONFIG.SRIOV_CAP_ENABLE {true}
+    CONFIG.mode_selection {Advanced}
+    CONFIG.pl_link_cap_max_link_width {X16}
+    CONFIG.pl_link_cap_max_link_speed {8.0_GT/s}
+    CONFIG.en_transceiver_status_ports {false}
+    CONFIG.dsc_byp_mode {Descriptor_bypass_and_internal}
+    CONFIG.testname {st}
+    CONFIG.pf1_pciebar2axibar_2 {0x0000000000000000}
+    CONFIG.pf2_pciebar2axibar_2 {0x0000000000000000}
+    CONFIG.pf3_pciebar2axibar_2 {0x0000000000000000}
+    CONFIG.dma_reset_source_sel {Phy_Ready}
+    CONFIG.pf0_bar0_prefetchable_qdma {false}
+    CONFIG.pf0_sriov_bar0_prefetchable {false}
+    CONFIG.pf0_bar2_prefetchable_qdma {false}
+    CONFIG.pf0_sriov_bar2_prefetchable {false}
+    CONFIG.pf0_bar2_scale_qdma {Megabytes}
+    CONFIG.pf0_bar2_size_qdma {8}
+    CONFIG.pf1_bar0_prefetchable_qdma {false}
+    CONFIG.pf1_sriov_bar0_prefetchable {false}
+    CONFIG.pf1_bar2_prefetchable_qdma {false}
+    CONFIG.pf1_sriov_bar2_prefetchable {false}
+    CONFIG.pf1_bar2_scale_qdma {Megabytes}
+    CONFIG.pf1_bar2_size_qdma {8}
+    CONFIG.pf2_bar0_prefetchable_qdma {false}
+    CONFIG.pf2_sriov_bar0_prefetchable {false}
+    CONFIG.pf2_bar2_prefetchable_qdma {false}
+    CONFIG.pf2_sriov_bar2_prefetchable {false}
+    CONFIG.pf2_bar2_scale_qdma {Megabytes}
+    CONFIG.pf2_bar2_size_qdma {8}
+    CONFIG.pf3_bar0_prefetchable_qdma {false}
+    CONFIG.pf3_sriov_bar0_prefetchable {false}
+    CONFIG.pf3_bar2_prefetchable_qdma {false}
+    CONFIG.pf3_sriov_bar2_prefetchable {false}
+    CONFIG.pf3_bar2_scale_qdma {Megabytes}
+    CONFIG.pf3_bar2_size_qdma {8}
+    CONFIG.PF0_MSIX_CAP_TABLE_SIZE_qdma {007}
+    CONFIG.PF1_MSIX_CAP_TABLE_SIZE_qdma {007}
+    CONFIG.PF2_MSIX_CAP_TABLE_SIZE_qdma {007}
+    CONFIG.PF3_MSIX_CAP_TABLE_SIZE_qdma {007}
+    CONFIG.pfch_cache_depth {64}
+    CONFIG.wrb_coal_max_buf {32}
+    CONFIG.dma_intf_sel_qdma {AXI_Stream_with_Completion}
+    CONFIG.en_axi_mm_qdma {false}
+    CONFIG.SYS_RST_N_BOARD_INTERFACE {pcie_perstn}
+    CONFIG.PCIE_BOARD_INTERFACE {pci_express_x16}
+    CONFIG.xlnx_ref_board {AU55C}
+    CONFIG.pf0_base_class_menu_qdma {Network_controller}
+    CONFIG.pf0_class_code_base_qdma {02}
+    CONFIG.pf0_class_code_sub_qdma {80}
+    CONFIG.pf0_sub_class_interface_menu_qdma {Other_network_controller}
+    CONFIG.pf0_class_code_qdma {028000}
+    CONFIG.pf0_sriov_bar2_scale {Megabytes}
+    CONFIG.pf0_sriov_bar2_size {8}
+    CONFIG.pf0_vf_pciebar2axibar_2 {0x0000000000000000}
+    CONFIG.pf1_base_class_menu_qdma {Network_controller}
+    CONFIG.pf1_class_code_base_qdma {02}
+    CONFIG.pf1_class_code_sub_qdma {80}
+    CONFIG.pf1_sub_class_interface_menu_qdma {Other_network_controller}
+    CONFIG.pf1_class_code_qdma {028000}
+    CONFIG.pf1_sriov_bar2_scale {Megabytes}
+    CONFIG.pf1_sriov_bar2_size {8}
+    CONFIG.pf1_vf_pciebar2axibar_2 {0x0000000000000000}
+} [get_ips $qdma]
+set_property CONFIG.tl_pf_enable_reg $num_phys_func [get_ips $qdma]
+set_property CONFIG.num_queues $num_queue [get_ips $qdma]
+set_property CONFIG.acs_ext_cap_enable {true} [get_ips $qdma]
