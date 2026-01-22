@@ -68,6 +68,14 @@ module system_config_register #(
   output [31:0] user_rstn,
   input  [31:0] user_rst_done,
 
+  input             card_sn_vld,
+  input       [7:0] card_sn_len,
+  input [0:15][7:0] card_sn,
+  input             error_boot_timeout,
+  input             error_bad_axil_transaction,
+  input             error_card_info_length,
+  input             error_bad_info_parse,
+
   input         aclk,
   input         aresetn
 );
@@ -86,8 +94,13 @@ module system_config_register #(
   localparam REG_DNA_0           = 12'h020;  // xilinx dna register (96b).
   localparam REG_DNA_1           = 12'h024;
   localparam REG_DNA_2           = 12'h028;
+  localparam REG_CARD_SN_STATUS  = 12'h02C;
+  localparam REG_CARD_SN_0       = 12'h030;
+  localparam REG_CARD_SN_1       = 12'h034;
+  localparam REG_CARD_SN_2       = 12'h038;
+  localparam REG_CARD_SN_3       = 12'h03C;
 
-  // Regsiters
+  // Registers
   reg          [31:0] reg_build_timestamp;
   reg                 reg_system_rst;
   reg                 reg_system_status;
@@ -174,6 +187,21 @@ module system_config_register #(
         end
         REG_DNA_2: begin
           reg_dout <= reg_dna[95:64];
+        end
+        REG_CARD_SN_STATUS: begin
+          reg_dout <= {12'h0, error_boot_timeout, error_bad_axil_transaction, error_card_info_length, error_bad_info_parse, 7'h0, card_sn_vld, card_sn_len};
+        end
+        REG_CARD_SN_0: begin
+          reg_dout <= {card_sn[3], card_sn[2], card_sn[1], card_sn[0]};
+        end
+        REG_CARD_SN_1: begin
+          reg_dout <= {card_sn[7], card_sn[6], card_sn[5], card_sn[4]};
+        end
+        REG_CARD_SN_2: begin
+          reg_dout <= {card_sn[11], card_sn[10], card_sn[9], card_sn[8]};
+        end
+        REG_CARD_SN_3: begin
+          reg_dout <= {card_sn[15], card_sn[14], card_sn[13], card_sn[12]};
         end
         default: begin
           reg_dout <= 32'hDEADBEEF;

@@ -256,6 +256,34 @@ module system_config #(
   wire  [2:0] axil_cms_int_awprot;
   wire  [2:0] axil_cms_int_arprot;
   wire  [3:0] axil_cms_int_wstrb;
+ 
+  wire        __axil_cms_int_awvalid;
+  wire [31:0] __axil_cms_int_awaddr;
+  wire        __axil_cms_int_awready;
+  wire        __axil_cms_int_wvalid;
+  wire [31:0] __axil_cms_int_wdata;
+  wire        __axil_cms_int_wready;
+  wire        __axil_cms_int_bvalid;
+  wire  [1:0] __axil_cms_int_bresp;
+  wire        __axil_cms_int_bready;
+  wire        __axil_cms_int_arvalid;
+  wire [31:0] __axil_cms_int_araddr;
+  wire        __axil_cms_int_arready;
+  wire        __axil_cms_int_rvalid;
+  wire [31:0] __axil_cms_int_rdata;
+  wire  [1:0] __axil_cms_int_rresp;
+  wire        __axil_cms_int_rready;
+  wire  [2:0] __axil_cms_int_awprot;
+  wire  [2:0] __axil_cms_int_arprot;
+  wire  [3:0] __axil_cms_int_wstrb;
+
+  logic             card_sn_vld;
+  logic [7:0]       card_sn_len;
+  logic [0:15][7:0] card_sn;
+  logic             error_boot_timeout;
+  logic             error_bad_axil_transaction;
+  logic             error_card_info_length;
+  logic             error_bad_info_parse;
 
   wire        axil_qspi_awvalid;
   wire [31:0] axil_qspi_awaddr;
@@ -506,6 +534,14 @@ module system_config #(
     .user_rstn      (user_rstn),
     .user_rst_done  (user_rst_done),
 
+    .card_sn_vld    (card_sn_vld),
+    .card_sn_len    (card_sn_len),
+    .card_sn        (card_sn),
+    .error_boot_timeout         (error_boot_timeout),
+    .error_bad_axil_transaction (error_bad_axil_transaction),
+    .error_card_info_length     (error_card_info_length),
+    .error_bad_info_parse       (error_bad_info_parse),
+
     .aclk           (aclk[0]),
     .aresetn        (aresetn)
   );
@@ -691,31 +727,83 @@ axi_lite_clock_converter axi_clock_conv_cms_inst (
       .m_axi_aresetn (cms_aresetn)
     );
 
+cms_sn_fetch_fsm cms_sn_fetch_fsm_inst (
+  .aclk    (cms_clk),
+  .aresetn (cms_aresetn),
+  // From controller
+  .s_axi_ctrl_ARADDR (axil_cms_int_araddr),
+  .s_axi_ctrl_ARPROT (axil_cms_int_arprot),
+  .s_axi_ctrl_ARREADY(axil_cms_int_arready),
+  .s_axi_ctrl_ARVALID(axil_cms_int_arvalid),
+  .s_axi_ctrl_AWADDR (axil_cms_int_awaddr),
+  .s_axi_ctrl_AWPROT (axil_cms_int_awprot),
+  .s_axi_ctrl_AWREADY(axil_cms_int_awready),
+  .s_axi_ctrl_AWVALID(axil_cms_int_awvalid),
+  .s_axi_ctrl_BREADY (axil_cms_int_bready),
+  .s_axi_ctrl_BRESP  (axil_cms_int_bresp),
+  .s_axi_ctrl_BVALID (axil_cms_int_bvalid),
+  .s_axi_ctrl_RDATA  (axil_cms_int_rdata),
+  .s_axi_ctrl_RREADY (axil_cms_int_rready),
+  .s_axi_ctrl_RRESP  (axil_cms_int_rresp),
+  .s_axi_ctrl_RVALID (axil_cms_int_rvalid),
+  .s_axi_ctrl_WDATA  (axil_cms_int_wdata),
+  .s_axi_ctrl_WREADY (axil_cms_int_wready),
+  .s_axi_ctrl_WSTRB  (axil_cms_int_wstrb),
+  .s_axi_ctrl_WVALID (axil_cms_int_wvalid),
+  // To CMS
+  .m_axi_ctrl_ARADDR (__axil_cms_int_araddr),
+  .m_axi_ctrl_ARPROT (__axil_cms_int_arprot),
+  .m_axi_ctrl_ARREADY(__axil_cms_int_arready),
+  .m_axi_ctrl_ARVALID(__axil_cms_int_arvalid),
+  .m_axi_ctrl_AWADDR (__axil_cms_int_awaddr),
+  .m_axi_ctrl_AWPROT (__axil_cms_int_awprot),
+  .m_axi_ctrl_AWREADY(__axil_cms_int_awready),
+  .m_axi_ctrl_AWVALID(__axil_cms_int_awvalid),
+  .m_axi_ctrl_BREADY (__axil_cms_int_bready),
+  .m_axi_ctrl_BRESP  (__axil_cms_int_bresp),
+  .m_axi_ctrl_BVALID (__axil_cms_int_bvalid),
+  .m_axi_ctrl_RDATA  (__axil_cms_int_rdata),
+  .m_axi_ctrl_RREADY (__axil_cms_int_rready),
+  .m_axi_ctrl_RRESP  (__axil_cms_int_rresp),
+  .m_axi_ctrl_RVALID (__axil_cms_int_rvalid),
+  .m_axi_ctrl_WDATA  (__axil_cms_int_wdata),
+  .m_axi_ctrl_WREADY (__axil_cms_int_wready),
+  .m_axi_ctrl_WSTRB  (__axil_cms_int_wstrb),
+  .m_axi_ctrl_WVALID (__axil_cms_int_wvalid),
+  .card_sn_vld (card_sn_vld),
+  .card_sn_len (card_sn_len),
+  .card_sn     (card_sn),
+  .error_boot_timeout         (error_boot_timeout),
+  .error_bad_axil_transaction (error_bad_axil_transaction),
+  .error_card_info_length     (error_card_info_length),
+  .error_bad_info_parse       (error_bad_info_parse)
+);
+
 cms_subsystem_wrapper
   cms_subsystem_wrapper_inst (
     .aclk_ctrl_0             (cms_clk),
     .aresetn_ctrl_0          (cms_aresetn),
 
     .interrupt_host_0        (),
-    .s_axi_ctrl_0_araddr     (axil_cms_int_araddr[17:0]),     
-    .s_axi_ctrl_0_arprot     (axil_cms_int_arprot),
-    .s_axi_ctrl_0_arready    (axil_cms_int_arready),
-    .s_axi_ctrl_0_arvalid    (axil_cms_int_arvalid),
-    .s_axi_ctrl_0_awaddr     (axil_cms_int_awaddr[17:0]),
-    .s_axi_ctrl_0_awprot     (axil_cms_int_awprot),
-    .s_axi_ctrl_0_awready    (axil_cms_int_awready),
-    .s_axi_ctrl_0_awvalid    (axil_cms_int_awvalid),
-    .s_axi_ctrl_0_bready     (axil_cms_int_bready),
-    .s_axi_ctrl_0_bresp      (axil_cms_int_bresp),
-    .s_axi_ctrl_0_bvalid     (axil_cms_int_bvalid),
-    .s_axi_ctrl_0_rdata      (axil_cms_int_rdata),
-    .s_axi_ctrl_0_rready     (axil_cms_int_rready),
-    .s_axi_ctrl_0_rresp      (axil_cms_int_rresp),
-    .s_axi_ctrl_0_rvalid     (axil_cms_int_rvalid),
-    .s_axi_ctrl_0_wdata      (axil_cms_int_wdata),
-    .s_axi_ctrl_0_wready     (axil_cms_int_wready),
-    .s_axi_ctrl_0_wstrb      (axil_cms_int_wstrb),
-    .s_axi_ctrl_0_wvalid     (axil_cms_int_wvalid),
+    .s_axi_ctrl_0_araddr     (__axil_cms_int_araddr[17:0]),     
+    .s_axi_ctrl_0_arprot     (__axil_cms_int_arprot),
+    .s_axi_ctrl_0_arready    (__axil_cms_int_arready),
+    .s_axi_ctrl_0_arvalid    (__axil_cms_int_arvalid),
+    .s_axi_ctrl_0_awaddr     (__axil_cms_int_awaddr[17:0]),
+    .s_axi_ctrl_0_awprot     (__axil_cms_int_awprot),
+    .s_axi_ctrl_0_awready    (__axil_cms_int_awready),
+    .s_axi_ctrl_0_awvalid    (__axil_cms_int_awvalid),
+    .s_axi_ctrl_0_bready     (__axil_cms_int_bready),
+    .s_axi_ctrl_0_bresp      (__axil_cms_int_bresp),
+    .s_axi_ctrl_0_bvalid     (__axil_cms_int_bvalid),
+    .s_axi_ctrl_0_rdata      (__axil_cms_int_rdata),
+    .s_axi_ctrl_0_rready     (__axil_cms_int_rready),
+    .s_axi_ctrl_0_rresp      (__axil_cms_int_rresp),
+    .s_axi_ctrl_0_rvalid     (__axil_cms_int_rvalid),
+    .s_axi_ctrl_0_wdata      (__axil_cms_int_wdata),
+    .s_axi_ctrl_0_wready     (__axil_cms_int_wready),
+    .s_axi_ctrl_0_wstrb      (__axil_cms_int_wstrb),
+    .s_axi_ctrl_0_wvalid     (__axil_cms_int_wvalid),
   
   `ifdef __au280__
     .hbm_temp_1_0            (hbm_temp_1_0),
