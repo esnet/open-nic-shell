@@ -133,6 +133,15 @@ module qdma_subsystem_qdma_wrapper #(
   input    [6:0] c2h_byp_in_st_csh_pfch_tag,
   output         c2h_byp_in_st_csh_rdy,
 
+  output         cfg_ext_read_received,
+  output         cfg_ext_write_received,
+  output   [9:0] cfg_ext_register_number,
+  output   [7:0] cfg_ext_function_number,
+  output  [31:0] cfg_ext_write_data,
+  output   [3:0] cfg_ext_write_byte_enable,
+  input   [31:0] cfg_ext_read_data,
+  input          cfg_ext_read_data_valid,
+
   input          pcie_refclk,
   input          pcie_refclk_gt,
   input          pcie_rstn,
@@ -495,6 +504,15 @@ module qdma_subsystem_qdma_wrapper #(
       .qsts_out_qid                         (),     // output wire [12 : 0] qsts_out_qid
       .qsts_out_vld                         (),     // output wire qsts_out_vld
       .qsts_out_rdy                         (1'b1), // input wire qsts_out_rdy
+
+      .cfg_ext_read_received                (cfg_ext_read_received),
+      .cfg_ext_write_received               (cfg_ext_write_received),
+      .cfg_ext_register_number              (cfg_ext_register_number),
+      .cfg_ext_function_number              (cfg_ext_function_number),
+      .cfg_ext_write_data                   (cfg_ext_write_data),
+      .cfg_ext_write_byte_enable            (cfg_ext_byte_enable),
+      .cfg_ext_read_data                    (cfg_ext_read_data),
+      .cfg_ext_read_data_valid              (cfg_ext_read_data_valid),
 
       .soft_reset_n                         (soft_reset_n),
       .phy_ready                            (phy_ready)

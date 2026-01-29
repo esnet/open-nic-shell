@@ -123,6 +123,9 @@ module system_config #(
   input                   [1:0] m_axil_box1_rresp,
   output                        m_axil_box1_rready,
 
+  output                        card_sn_vld,
+  output            [0:11][7:0] card_sn,
+
   output                 [31:0] shell_rstn,
   input                  [31:0] shell_rst_done,
   output                 [31:0] user_rstn,
@@ -277,9 +280,8 @@ module system_config #(
   wire  [2:0] __axil_cms_int_arprot;
   wire  [3:0] __axil_cms_int_wstrb;
 
-  logic             card_sn_vld;
   logic [7:0]       card_sn_len;
-  logic [0:15][7:0] card_sn;
+  logic [0:15][7:0] __card_sn;
   logic             error_boot_timeout;
   logic             error_bad_axil_transaction;
   logic             error_card_info_length;
@@ -536,7 +538,7 @@ module system_config #(
 
     .card_sn_vld    (card_sn_vld),
     .card_sn_len    (card_sn_len),
-    .card_sn        (card_sn),
+    .card_sn        (__card_sn),
     .error_boot_timeout         (error_boot_timeout),
     .error_bad_axil_transaction (error_bad_axil_transaction),
     .error_card_info_length     (error_card_info_length),
@@ -772,12 +774,14 @@ cms_sn_fetch_fsm cms_sn_fetch_fsm_inst (
   .m_axi_ctrl_WVALID (__axil_cms_int_wvalid),
   .card_sn_vld (card_sn_vld),
   .card_sn_len (card_sn_len),
-  .card_sn     (card_sn),
+  .card_sn     (__card_sn),
   .error_boot_timeout         (error_boot_timeout),
   .error_bad_axil_transaction (error_bad_axil_transaction),
   .error_card_info_length     (error_card_info_length),
   .error_bad_info_parse       (error_bad_info_parse)
 );
+
+assign card_sn = __card_sn[0:11];
 
 cms_subsystem_wrapper
   cms_subsystem_wrapper_inst (

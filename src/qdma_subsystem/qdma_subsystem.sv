@@ -63,6 +63,9 @@ module qdma_subsystem #(
 
   output     [NUM_PHYS_FUNC-1:0] s_axis_c2h_tready,
 
+  input                          card_sn_vld,
+  input              [0:11][7:0] card_sn,
+
 `ifdef __synthesis__
   input                   [15:0] pcie_rxp,
   input                   [15:0] pcie_rxn,
@@ -268,6 +271,15 @@ module qdma_subsystem #(
 
   wire         axil_aresetn;
 
+  wire         cfg_ext_read_received;
+  wire         cfg_ext_write_received;
+  wire [9:0]   cfg_ext_register_number;
+  wire [7:0]   cfg_ext_function_number;
+  wire [31:0]  cfg_ext_write_data;
+  wire [3:0]   cfg_ext_write_byte_enable;
+  wire [31:0]  cfg_ext_read_data;
+  wire         cfg_ext_read_data_valid;
+
   // Reset is clocked by the 125MHz AXI-Lite clock
   generic_reset #(
     .NUM_INPUT_CLK  (1),
@@ -434,6 +446,15 @@ module qdma_subsystem #(
     .pcie_rstn                       (pcie_rstn),
     .user_lnk_up                     (user_lnk_up),
     .phy_ready                       (phy_ready),
+
+    .cfg_ext_read_received,
+    .cfg_ext_write_received,
+    .cfg_ext_register_number,
+    .cfg_ext_function_number,
+    .cfg_ext_write_data,
+    .cfg_ext_write_byte_enable,
+    .cfg_ext_read_data,
+    .cfg_ext_read_data_valid,
 
     .soft_reset_n                    (axil_aresetn),
 
@@ -870,5 +891,22 @@ module qdma_subsystem #(
     end
   end
   endgenerate
+
+  qdma_pcie_ext_cfg_vpd #(
+    .CFG_EXT_NXT_CAP (0)
+  ) qdma_pcie_ext_cfg_vpd_inst (
+    .aclk    (axis_aclk),
+    .aresetn (powerup_rstn),
+    .cfg_ext_read_received,
+    .cfg_ext_write_received,
+    .cfg_ext_register_number,
+    .cfg_ext_function_number,
+    .cfg_ext_write_data,
+    .cfg_ext_write_byte_enable,
+    .cfg_ext_read_data,
+    .cfg_ext_read_data_valid,
+    .card_sn,
+    .card_sn_vld
+  );
 
 endmodule: qdma_subsystem
