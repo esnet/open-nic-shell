@@ -24,6 +24,7 @@ set_property -dict {
     CONFIG.pl_link_cap_max_link_speed {8.0_GT/s}
     CONFIG.en_transceiver_status_ports {false}
     CONFIG.dsc_byp_mode {Descriptor_bypass_and_internal}
+    CONFIG.legacy_cfg_ext_if {true}
     CONFIG.testname {st}
     CONFIG.pf1_pciebar2axibar_2 {0x0000000000000000}
     CONFIG.pf2_pciebar2axibar_2 {0x0000000000000000}

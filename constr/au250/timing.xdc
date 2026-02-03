@@ -33,3 +33,8 @@ resize_pblock [get_pblocks pblock_packet_adapter] -add {SLR2}
 create_pblock pblock_qdma_subsystem
 add_cells_to_pblock [get_pblocks pblock_qdma_subsystem] [get_cells -quiet {qdma_if*.qdma_subsystem_inst}]
 resize_pblock [get_pblocks pblock_qdma_subsystem] -add {CLOCKREGION_X4Y4:CLOCKREGION_X7Y7}
+
+set_false_path -from [get_pins {system_config_inst/cms_sn_fetch_fsm_inst/card_sn_vld_reg/C}]
+set_false_path -from [get_pins {system_config_inst/cms_sn_fetch_fsm_inst/card_sn_len_reg*/C}]
+set_false_path -from [get_pins {system_config_inst/cms_sn_fetch_fsm_inst/card_sn_reg*/C}]
+set_false_path -from [get_pins {system_config_inst/cms_sn_fetch_fsm_inst/error*/C}]

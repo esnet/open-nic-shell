@@ -48,3 +48,23 @@ regs:
   - name: dna
     access: ro
     count: 3
+  - name: card_sn_status
+    access: ro
+    fields:
+      - name: len
+        width: 8
+      - name: vld
+        width: 1
+      - name: rsvd0
+        width: 7
+      - name: err_bad_info_parse
+        width: 1
+      - name: err_card_info_length
+        width: 1
+      - name: err_bad_axil_transaction
+        width: 1
+      - name: err_boot_timeout
+        width: 1
+  - name: card_sn
+    access: ro
+    count: 4

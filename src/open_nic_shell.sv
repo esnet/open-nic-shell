@@ -443,6 +443,9 @@ module open_nic_shell #(
   wire     [NUM_CMAC_PORT-1:0] axis_cmac_rx_tlast;
   wire     [NUM_CMAC_PORT-1:0] axis_cmac_rx_tuser_err;
 
+  wire             [0:11][7:0] card_sn;
+  wire                         card_sn_vld;
+
   wire                  [31:0] shell_rstn;
   wire                  [31:0] shell_rst_done;
   wire          [NUM_QDMA-1:0] qdma_rstn;
@@ -659,6 +662,9 @@ module open_nic_shell #(
     .m_axil_box1_rresp   (axil_box1_rresp),
     .m_axil_box1_rready  (axil_box1_rready),
 
+    .card_sn             (card_sn),
+    .card_sn_vld         (card_sn_vld),
+
     .shell_rstn          (shell_rstn),
     .shell_rst_done      (shell_rst_done),
     .user_rstn           (user_rstn),
@@ -749,6 +755,9 @@ module open_nic_shell #(
       .s_axis_c2h_tuser_qid_valid           (axis_qdma_c2h_tuser_qid_valid[`getvec(NUM_PHYS_FUNC, i)]),
       .s_axis_c2h_tuser_qid                 (axis_qdma_c2h_tuser_qid[`getvec(12*NUM_PHYS_FUNC, i)]),
       .s_axis_c2h_tready                    (axis_qdma_c2h_tready[`getvec(NUM_PHYS_FUNC, i)]),
+
+      .card_sn                              (card_sn),
+      .card_sn_vld                          (card_sn_vld),
 
   `ifdef __synthesis__
       .pcie_rxp                             (qdma_pcie_rxp[`getvec(16, i)]),
