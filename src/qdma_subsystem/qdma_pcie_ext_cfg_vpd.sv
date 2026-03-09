@@ -1,4 +1,5 @@
 module qdma_pcie_ext_cfg_vpd #(
+  parameter int NUM_PHYS_FUNC = 2,
   parameter logic [7:0] CFG_EXT_NXT_CAP = 8'h0 // Next capability pointer
 ) (
   input  logic             aclk,
@@ -26,6 +27,8 @@ module qdma_pcie_ext_cfg_vpd #(
   localparam int VPD_ADDR_WID = 15;
   localparam int VPD_BYTES = 40;
 
+  localparam int FUNC_SEL_WID = $clog2(NUM_PHYS_FUNC);
+
   // Typedefs
   typedef enum logic [2:0] {
     VPD_RESET,
@@ -40,19 +43,8 @@ module qdma_pcie_ext_cfg_vpd #(
   logic cfg_register_in_range;
   logic cfg_read;
   logic cfg_write;
-  struct packed {logic flag; logic[VPD_ADDR_WID-1:0] addr; logic[7:0] NXT_CAP; logic[7:0] CAP_ID;} vpd_ctrl_reg;
-  logic [3:0][7:0] vpd_data_reg;
-
-  vpd_state_t              vpd_state;
-  vpd_state_t              nxt_vpd_state;
-  logic                    latch_vpd_addr;
-
-  logic                    vpd_status;
-  logic [VPD_ADDR_WID-1:0] vpd_addr;
-  logic                    vpd_wr;
-  logic                    vpd_rd;
-  logic                    vpd_rd_ack;
-  logic [3:0][7:0]         vpd_rd_data;
+  struct packed {logic flag; logic[VPD_ADDR_WID-1:0] addr; logic[7:0] NXT_CAP; logic[7:0] CAP_ID;} vpd_ctrl_reg [NUM_PHYS_FUNC];
+  logic [3:0][7:0] vpd_data_reg [NUM_PHYS_FUNC];
 
   logic [0:11][7:0]        __card_sn;
   logic [7:0]              fixed_ro_chksum;
@@ -76,93 +68,114 @@ module qdma_pcie_ext_cfg_vpd #(
   initial cfg_ext_read_data = 0;
   always_ff @(posedge aclk) begin
     if (cfg_read) begin
-      case (cfg_ext_register_number)
-        CFG_EXT_REGISTER__VPD_CTRL : cfg_ext_read_data <= vpd_ctrl_reg;
-        CFG_EXT_REGISTER__VPD_DATA : cfg_ext_read_data <= vpd_data_reg;
-        default :                    cfg_ext_read_data <= 0;
-      endcase
+        if (cfg_ext_function_number < NUM_PHYS_FUNC) begin
+            case (cfg_ext_register_number)
+                CFG_EXT_REGISTER__VPD_CTRL : cfg_ext_read_data <= vpd_ctrl_reg[cfg_ext_function_number[FUNC_SEL_WID-1:0]];
+                CFG_EXT_REGISTER__VPD_DATA : cfg_ext_read_data <= vpd_data_reg[cfg_ext_function_number[FUNC_SEL_WID-1:0]];
+                default :                    cfg_ext_read_data <= 0;
+            endcase
+        end else cfg_ext_read_data <= 0;
     end
   end
 
-  // VPD capability/control register
-  assign vpd_ctrl_reg.flag    = vpd_status;
-  assign vpd_ctrl_reg.addr    = vpd_addr;
-  assign vpd_ctrl_reg.NXT_CAP = CFG_EXT_NXT_CAP;
-  assign vpd_ctrl_reg.CAP_ID  = CFG_EXT_CAP_ID__VPD;
+  generate
+    for (genvar g_func = 0; g_func < NUM_PHYS_FUNC; g_func++) begin : g__func
+      // (Local) parameters
+      vpd_state_t              vpd_state;
+      vpd_state_t              nxt_vpd_state;
+      logic                    latch_vpd_addr;
 
+      logic                    vpd_status;
+      logic [VPD_ADDR_WID-1:0] vpd_addr;
+      logic                    vpd_wr;
+      logic                    vpd_rd;
+      logic                    vpd_rd_ack;
+      logic [3:0][7:0]         vpd_rd_data;
 
-  // VPD write/read FSM
-  initial vpd_state = VPD_RESET;
-  always @(posedge aclk) begin
-    if (!aresetn) vpd_state <= VPD_RESET;
-    else          vpd_state <= nxt_vpd_state;
-  end
+      // VPD capability/control register
+      assign vpd_ctrl_reg[g_func].flag    = vpd_status;
+      assign vpd_ctrl_reg[g_func].addr    = vpd_addr;
+      assign vpd_ctrl_reg[g_func].NXT_CAP = CFG_EXT_NXT_CAP;
+      assign vpd_ctrl_reg[g_func].CAP_ID  = CFG_EXT_CAP_ID__VPD;
 
-  always_comb begin
-    nxt_vpd_state = vpd_state;
-    vpd_status = 1'b0;
-    latch_vpd_addr = 1'b0;
-    case (vpd_state)
-      VPD_RESET : begin
-        nxt_vpd_state = VPD_IDLE;
+      // VPD write/read FSM
+      initial vpd_state = VPD_RESET;
+      always @(posedge aclk) begin
+        if (!aresetn) vpd_state <= VPD_RESET;
+        else          vpd_state <= nxt_vpd_state;
       end
-      VPD_IDLE : begin
-        if (cfg_write && cfg_ext_register_number == CFG_EXT_REGISTER__VPD_CTRL) begin
-          latch_vpd_addr = 1'b1;
-          if (cfg_ext_write_data[31]) nxt_vpd_state = VPD_WR;
-          else                        nxt_vpd_state = VPD_RD;
+
+      always_comb begin
+        nxt_vpd_state = vpd_state;
+        vpd_status = 1'b0;
+        latch_vpd_addr = 1'b0;
+        case (vpd_state)
+          VPD_RESET : begin
+            nxt_vpd_state = VPD_IDLE;
+          end
+          VPD_IDLE : begin
+            if (cfg_write && cfg_ext_register_number == CFG_EXT_REGISTER__VPD_CTRL && cfg_ext_function_number == g_func) begin
+              latch_vpd_addr = 1'b1;
+              if (cfg_ext_write_data[31]) nxt_vpd_state = VPD_WR;
+              else                        nxt_vpd_state = VPD_RD;
+            end
+          end
+          VPD_WR : begin
+            vpd_status = 1'b1;
+            vpd_wr = 1'b1;
+            nxt_vpd_state = VPD_IDLE;
+          end
+          VPD_RD : begin
+            vpd_rd = 1'b1;
+            nxt_vpd_state = VPD_RD_WAIT;
+          end
+          VPD_RD_WAIT : begin
+            if (vpd_rd_ack) nxt_vpd_state = VPD_RD_ACK;
+          end
+          VPD_RD_ACK : begin
+            vpd_status = 1'b1;
+            if (cfg_read && cfg_ext_register_number == CFG_EXT_REGISTER__VPD_CTRL && cfg_ext_function_number == g_func) nxt_vpd_state = VPD_IDLE;
+          end
+          default : begin
+            nxt_vpd_state = VPD_RESET;
+          end
+        endcase
+      end
+
+      initial vpd_addr = '0;
+      always @(posedge aclk) begin
+        if (!aresetn)            vpd_addr <= '0;
+        else if (latch_vpd_addr) vpd_addr <= cfg_ext_write_data[30:16];
+      end
+
+      initial vpd_data_reg[g_func] = 0;
+      always @(posedge aclk) begin
+        if (cfg_write && cfg_ext_register_number == CFG_EXT_REGISTER__VPD_DATA && cfg_ext_function_number == g_func) begin
+          for (int i = 0; i < 4; i++) begin
+            if (cfg_ext_write_byte_enable[i]) vpd_data_reg[g_func][i] <= cfg_ext_write_data[i*8 +: 8];
+          end
+        end else if (vpd_rd_ack) begin
+            vpd_data_reg[g_func] <= vpd_rd_data;
         end
       end
-      VPD_WR : begin
-        vpd_status = 1'b1;
-        vpd_wr = 1'b1;
-        nxt_vpd_state = VPD_IDLE;
-      end
-      VPD_RD : begin
-        vpd_rd = 1'b1;
-        nxt_vpd_state = VPD_RD_WAIT;
-      end
-      VPD_RD_WAIT : begin
-        if (vpd_rd_ack) nxt_vpd_state = VPD_RD_ACK;
-      end
-      VPD_RD_ACK : begin
-        vpd_status = 1'b1;
-        if (cfg_read && cfg_ext_register_number == CFG_EXT_REGISTER__VPD_CTRL) nxt_vpd_state = VPD_IDLE;
-      end
-      default : begin
-        nxt_vpd_state = VPD_RESET;
-      end
-    endcase
-  end
 
-  initial vpd_addr = '0;
-  always @(posedge aclk) begin
-    if (!aresetn)            vpd_addr <= '0;
-    else if (latch_vpd_addr) vpd_addr <= cfg_ext_write_data[30:16];
-  end
-
-  initial vpd_data_reg = 0;
-  always @(posedge aclk) begin
-    if (cfg_write && cfg_ext_register_number == CFG_EXT_REGISTER__VPD_DATA) begin
-      for (int i = 0; i < 4; i++) begin
-        if (cfg_ext_write_byte_enable[i]) vpd_data_reg[i] <= cfg_ext_write_data[i*8 +: 8];
+      always @(posedge aclk) begin
+        if (vpd_rd) begin
+          for (int i = 0; i < 4; i ++) begin
+            if ((vpd_addr + i) > VPD_BYTES-1) vpd_rd_data[i] <= 8'hFF;
+            else                              vpd_rd_data[i] <= VPD[vpd_addr + i];
+          end
+        end
       end
-    end else if (vpd_rd_ack) begin
-        vpd_data_reg <= vpd_rd_data;
-    end
-  end
 
-  always @(posedge aclk) begin
-    if (vpd_rd) begin
-      for (int i = 0; i < 4; i ++) begin
-        if ((vpd_addr + i) > VPD_BYTES-1) vpd_rd_data[i] <= 8'hFF;
-        else                              vpd_rd_data[i] <= VPD[vpd_addr + i];
-      end
-    end
-  end
+      initial vpd_rd_ack = 1'b0;
+      always_ff @(posedge aclk) vpd_rd_ack <= vpd_rd;
 
-  initial vpd_rd_ack = 1'b0;
-  always_ff @(posedge aclk) vpd_rd_ack <= vpd_rd;
+    end : g__func
+  endgenerate
+
+  // VPD data
+  // (common to all functions)
 
   // Card SN
   always @(posedge aclk) begin

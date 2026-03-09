@@ -510,7 +510,7 @@ module qdma_subsystem_qdma_wrapper #(
       .cfg_ext_register_number              (cfg_ext_register_number),
       .cfg_ext_function_number              (cfg_ext_function_number),
       .cfg_ext_write_data                   (cfg_ext_write_data),
-      .cfg_ext_write_byte_enable            (cfg_ext_byte_enable),
+      .cfg_ext_write_byte_enable            (cfg_ext_write_byte_enable),
       .cfg_ext_read_data                    (cfg_ext_read_data),
       .cfg_ext_read_data_valid              (cfg_ext_read_data_valid),
 

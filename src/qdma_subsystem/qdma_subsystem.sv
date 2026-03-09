@@ -893,6 +893,7 @@ module qdma_subsystem #(
   endgenerate
 
   qdma_pcie_ext_cfg_vpd #(
+    .NUM_PHYS_FUNC (NUM_PHYS_FUNC),
     .CFG_EXT_NXT_CAP (0)
   ) qdma_pcie_ext_cfg_vpd_inst (
     .aclk    (axis_aclk),
