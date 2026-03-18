@@ -63,8 +63,14 @@ module qdma_subsystem #(
 
   output     [NUM_PHYS_FUNC-1:0] s_axis_c2h_tready,
 
-  input                          card_sn_vld,
-  input              [0:11][7:0] card_sn,
+  input                          vpd_clk,
+  input                          vpd_srst,
+  output                         vpd_req,
+  output                         vpd_wr_rd_n,
+  output                  [14:0] vpd_addr,
+  output                   [7:0] vpd_wr_data,
+  input                    [7:0] vpd_rd_data,
+  input                          vpd_rd_vld,
 
 `ifdef __synthesis__
   input                   [15:0] pcie_rxp,
@@ -892,7 +898,7 @@ module qdma_subsystem #(
   end
   endgenerate
 
-  qdma_pcie_ext_cfg_vpd #(
+  qdma_pci_cfg_ext_vpd #(
     .NUM_PHYS_FUNC (NUM_PHYS_FUNC),
     .CFG_EXT_NXT_CAP (0)
   ) qdma_pcie_ext_cfg_vpd_inst (
@@ -906,8 +912,14 @@ module qdma_subsystem #(
     .cfg_ext_write_byte_enable,
     .cfg_ext_read_data,
     .cfg_ext_read_data_valid,
-    .card_sn,
-    .card_sn_vld
+    .vpd_clk,
+    .vpd_srst,
+    .vpd_req,
+    .vpd_wr_rd_n,
+    .vpd_addr,
+    .vpd_wr_data,
+    .vpd_rd_data,
+    .vpd_rd_vld
   );
 
 endmodule: qdma_subsystem
