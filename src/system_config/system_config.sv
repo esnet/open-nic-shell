@@ -858,9 +858,9 @@ cms_subsystem_wrapper
   );
 
   system_config_vpd #(
-    .CMS_REG_OFFSET (32'h20000),
-    .QSPI_REG_OFFSET(32'h40000),
-    .BUILD_ID       (BUILD_TIMESTAMP)
+    .BUILD_ID        (BUILD_TIMESTAMP),
+    .FLASH_REG_OFFSET(32'h20000),
+    .CMS_REG_OFFSET  (32'h40000)
   ) system_config_vpd_inst (
     .clk (vpd_clk),
     .srst(vpd_srst),

@@ -1,8 +1,8 @@
 module system_config_vpd #(
-    parameter              PRODUCT_ID      = "ESnet SmartNIC",
-    parameter logic [31:0] CMS_REG_OFFSET  = 0,
-    parameter logic [31:0] QSPI_REG_OFFSET = 0,
-    parameter logic [31:0] BUILD_ID        = 0
+    parameter              PRODUCT_ID       = "ESnet SmartNIC",
+    parameter logic [31:0] BUILD_ID         = 0,
+    parameter logic [31:0] FLASH_REG_OFFSET = 0,
+    parameter logic [31:0] CMS_REG_OFFSET   = 0
 ) (
     input  logic        clk,
     input  logic        srst,
@@ -41,12 +41,66 @@ module system_config_vpd #(
 
     localparam logic [15:0] PRODUCT_ID_LEN = $bits(PRODUCT_ID)/8 + 1; // Account for null string termination
 
+    function automatic logic [7:0][7:0] get_dword_hex_string(input logic [31:0] dword);
+        logic [7:0][7:0] dword_string;
+        for (int i = 0; i < 8; i++) begin
+            dword_string[i] = dword[i*4 +: 4] > 9 ? dword[i*4 +: 4]- 10 + "A" : dword[i*4 +: 4] + "0"; 
+        end
+        return dword_string;
+    endfunction
+
+    function automatic int get_dword_hex_string_len(input logic [7:0][7:0] dword_hex_string);
+        automatic int len = 8;
+        for (int i = 7; i > 0; i--) begin
+            if (dword_hex_string[i] > "0") return len;
+            else len--;
+        end
+        return len;
+    endfunction
+
+    function automatic logic [9:0][7:0] get_dword_dec_string(input logic [31:0] dword);
+        logic [9:0][7:0] dword_string;
+        for (int i = 0; i < 10; i++) begin
+            dword_string[i] = dword % 10 + "0";
+            dword = dword / 10;
+        end
+        return dword_string;
+    endfunction
+
+    function automatic int get_dword_dec_string_len(input logic [9:0][7:0] dword_dec_string);
+        automatic int len = 10;
+        for (int i = 9; i > 0; i--) begin
+            if (dword_dec_string[i] > "0") return len;
+            else len--;
+        end
+        return len;
+    endfunction
+
     localparam int VPD_RO_START_OFFSET = 3 + PRODUCT_ID_LEN;
     localparam logic [15:0] VPD_RO_LEN = (VPD_MAX_LEN-1) - VPD_RO_START_OFFSET - 3; // Size of VPD-R (read-only data)
-    localparam int VPD_V0_START_OFFSET = VPD_RO_START_OFFSET + 3;
-    localparam int VPD_V1_START_OFFSET = VPD_V0_START_OFFSET + 7;
-    localparam int VPD_V2_START_OFFSET = VPD_V1_START_OFFSET + 7;
-    localparam int VPD_CARDINFO_START_OFFSET = VPD_V2_START_OFFSET + 7;
+
+    localparam int VPD_VB_START_OFFSET = VPD_RO_START_OFFSET + 3;
+    localparam     VPD_VB_LABEL = "Build ID: ";
+    localparam int VPD_VB_LABEL_LEN = $bits(VPD_VB_LABEL)/8;
+    localparam logic [9:0][7:0] VPD_VB_VALUE = get_dword_dec_string(BUILD_ID);
+    localparam int         VPD_VB_VALUE_LEN = get_dword_dec_string_len(VPD_VB_VALUE);
+    localparam logic [7:0] VPD_VB_LEN = VPD_VB_LABEL_LEN + VPD_VB_VALUE_LEN + 1; // String is null-terminated
+
+    localparam int VPD_VF_START_OFFSET = VPD_VB_START_OFFSET + 3 + VPD_VB_LEN;
+    localparam     VPD_VF_LABEL = "Flash offset: ";
+    localparam int VPD_VF_LABEL_LEN = $bits(VPD_VF_LABEL)/8;
+    localparam logic [7:0][7:0] VPD_VF_VALUE = get_dword_hex_string(FLASH_REG_OFFSET);
+    localparam int         VPD_VF_VALUE_LEN = get_dword_dec_string_len(VPD_VF_VALUE);
+    localparam logic [7:0] VPD_VF_LEN = VPD_VF_LABEL_LEN + 2 + VPD_VF_VALUE_LEN + 1; // Include 0x prefix and null termination
+
+    localparam int VPD_VC_START_OFFSET = VPD_VF_START_OFFSET + 3 + VPD_VF_LEN;
+    localparam     VPD_VC_LABEL = "CMS offset: ";
+    localparam int VPD_VC_LABEL_LEN = $bits(VPD_VC_LABEL)/8;
+    localparam logic [7:0][7:0] VPD_VC_VALUE = get_dword_hex_string(CMS_REG_OFFSET);
+    localparam int         VPD_VC_VALUE_LEN = get_dword_dec_string_len(VPD_VC_VALUE);
+    localparam logic [7:0] VPD_VC_LEN = VPD_VC_LABEL_LEN + 2 + VPD_VC_VALUE_LEN + 1; // Include 0x prefix and null termination
+
+    localparam int VPD_CARDINFO_START_OFFSET = VPD_VC_START_OFFSET + 3 + VPD_VC_LEN;
     localparam int VPD_VAR_START_OFFSET = VPD_CARDINFO_START_OFFSET; // Start of 'variable' data, retrieved from card info
                                                                      // ... or, end of 'static' data
 
@@ -231,9 +285,9 @@ module system_config_vpd #(
         // (fixed-size) data structure; this is possible by filling
         // 'zero' bytes in the RV field)
         VPD_RO_LEN[7:0], VPD_RO_LEN[15:8],
-        "V0", 8'h04, BUILD_ID,
-        "V1", 8'h04, QSPI_REG_OFFSET,
-        "V2", 8'h04, CMS_REG_OFFSET
+        "VB", VPD_VB_LEN, VPD_VB_LABEL, VPD_VB_VALUE[VPD_VB_VALUE_LEN-1:0], 8'h0,
+        "VF", VPD_VF_LEN, VPD_VF_LABEL, "0x", VPD_VF_VALUE[VPD_VF_VALUE_LEN-1:0], 8'h0,
+        "VC", VPD_VC_LEN, VPD_VC_LABEL, "0x", VPD_VC_VALUE[VPD_VC_VALUE_LEN-1:0], 8'h0
     // -- Variable data (i.e. card info) goes here (populated by Init FSM)
     };
 
@@ -311,7 +365,7 @@ module system_config_vpd #(
             end 
             SC_VERSION_WRITE_TO_VPD : begin
                 vpd_wr_req = 1'b1;
-                vpd_wr_tag = "V3";
+                vpd_wr_tag = "RM";
                 if (vpd_state == VPD_DONE)       nxt_state = CHKSUM;
                 else if (vpd_state == VPD_ERROR) nxt_state = ERROR;
             end
