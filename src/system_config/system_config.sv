@@ -18,6 +18,7 @@
 `timescale 1ns/1ps
 module system_config #(
   parameter [31:0] BUILD_TIMESTAMP = 32'h01010000,
+  parameter [31:0] BUILD_ID = 32'h0,
   parameter int    NUM_QDMA     = 1,
   parameter int    NUM_CMAC_PORT   = 1
 ) (
@@ -858,7 +859,7 @@ cms_subsystem_wrapper
   );
 
   system_config_vpd #(
-    .BUILD_ID        (BUILD_TIMESTAMP),
+    .BUILD_ID        (BUILD_ID),
     .FLASH_REG_OFFSET(32'h20000),
     .CMS_REG_OFFSET  (32'h40000)
   ) system_config_vpd_inst (

@@ -19,6 +19,7 @@
 `timescale 1ns/1ps
 module open_nic_shell #(
   parameter [31:0] BUILD_TIMESTAMP = 32'h01010000,
+  parameter [31:0] BUILD_ID        = 32'h0,
   parameter int    MIN_PKT_LEN     = 64,
   parameter int    MAX_PKT_LEN     = 1518,
   parameter int    USE_PHYS_FUNC   = 1,
@@ -544,6 +545,7 @@ module open_nic_shell #(
 
   system_config #(
     .BUILD_TIMESTAMP (BUILD_TIMESTAMP),
+    .BUILD_ID        (BUILD_ID),
     .NUM_QDMA        (NUM_QDMA),
     .NUM_CMAC_PORT   (NUM_CMAC_PORT)
   ) system_config_inst (

@@ -404,6 +404,7 @@ foreach {key value} [array get design_params] {
     set p [string toupper [string range $key 1 end]]
     lappend generic "$p=$value"
 }
+lappend generic "BUILD_ID=32'h$bitstream_userid"
 set_property -name generic -value $generic -object [current_fileset]
 set_property top $top [get_property srcset [current_run]]
 
