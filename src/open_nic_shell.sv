@@ -18,8 +18,13 @@
 `include "open_nic_shell_macros.vh"
 `timescale 1ns/1ps
 module open_nic_shell #(
-  parameter [31:0] BUILD_TIMESTAMP = 32'h01010000,
+  parameter        PRODUCT_ID      = "OpenNIC Shell",
+  parameter        APPLICATION_ID  = "(empty)",
   parameter [31:0] BUILD_ID        = 32'h0,
+  parameter        BUILD_GIT_REPO  = "(empty)",
+  parameter        BUILD_GIT_HASH  = "(empty)",
+  parameter [31:0] BUILD_TIMESTAMP = 32'h01010000,
+  parameter        BUILD_TIMESTAMP_STR = "(empty)",
   parameter int    MIN_PKT_LEN     = 64,
   parameter int    MAX_PKT_LEN     = 1518,
   parameter int    USE_PHYS_FUNC   = 1,
@@ -544,11 +549,16 @@ module open_nic_shell #(
 `endif
 
   system_config #(
-    .BUILD_TIMESTAMP (BUILD_TIMESTAMP),
-    .BUILD_ID        (BUILD_ID),
-    .NUM_QDMA        (NUM_QDMA),
-    .NUM_CMAC_PORT   (NUM_CMAC_PORT)
-  ) system_config_inst (
+    .PRODUCT_ID          (PRODUCT_ID),
+    .APPLICATION_ID      (APPLICATION_ID),
+    .BUILD_ID            (BUILD_ID),
+    .BUILD_GIT_REPO      (BUILD_GIT_REPO),
+    .BUILD_GIT_HASH      (BUILD_GIT_HASH),
+    .BUILD_TIMESTAMP     (BUILD_TIMESTAMP),
+    .BUILD_TIMESTAMP_STR (BUILD_TIMESTAMP_STR),
+    .NUM_QDMA            (NUM_QDMA),
+    .NUM_CMAC_PORT       (NUM_CMAC_PORT)
+  ) system_config_inst   (
 `ifdef __synthesis__
     .s_axil_awvalid      (axil_pcie_awvalid),
     .s_axil_awaddr       (axil_pcie_awaddr),

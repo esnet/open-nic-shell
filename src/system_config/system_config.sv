@@ -17,10 +17,15 @@
 // *************************************************************************
 `timescale 1ns/1ps
 module system_config #(
-  parameter [31:0] BUILD_TIMESTAMP = 32'h01010000,
-  parameter [31:0] BUILD_ID = 32'h0,
-  parameter int    NUM_QDMA     = 1,
-  parameter int    NUM_CMAC_PORT   = 1
+  parameter        PRODUCT_ID          = "(empty)",
+  parameter        APPLICATION_ID      = "(empty)",
+  parameter [31:0] BUILD_ID            = 32'h0,
+  parameter        BUILD_GIT_REPO      = "(empty)",
+  parameter        BUILD_GIT_HASH      = "(empty)",
+  parameter [31:0] BUILD_TIMESTAMP     = 32'h01010000,
+  parameter        BUILD_TIMESTAMP_STR = "(empty)",
+  parameter int    NUM_QDMA            = 1,
+  parameter int    NUM_CMAC_PORT       = 1
 ) (
   input          [NUM_QDMA-1:0] s_axil_awvalid,
   input       [32*NUM_QDMA-1:0] s_axil_awaddr,
@@ -858,10 +863,15 @@ cms_subsystem_wrapper
     .satellite_uart_0_txd    (satellite_uart_0_txd)
   );
 
-  system_config_vpd #(
-    .BUILD_ID        (BUILD_ID),
-    .FLASH_REG_OFFSET(32'h20000),
-    .CMS_REG_OFFSET  (32'h40000)
+  system_config_vpd     #(
+    .PRODUCT_ID          (PRODUCT_ID),
+    .APPLICATION_ID      (APPLICATION_ID),
+    .BUILD_ID            (BUILD_ID),
+    .BUILD_GIT_REPO      (BUILD_GIT_REPO),
+    .BUILD_GIT_HASH      (BUILD_GIT_HASH),
+    .BUILD_TIMESTAMP_STR (BUILD_TIMESTAMP_STR),
+    .FLASH_REG_OFFSET    (32'h20000),
+    .CMS_REG_OFFSET      (32'h40000)
   ) system_config_vpd_inst (
     .clk (vpd_clk),
     .srst(vpd_srst),
