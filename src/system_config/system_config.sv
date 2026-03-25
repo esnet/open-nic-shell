@@ -18,6 +18,7 @@
 `timescale 1ns/1ps
 module system_config #(
   parameter [31:0] BUILD_TIMESTAMP = 32'h01010000,
+  parameter [31:0] BUILD_ID = 32'h0,
   parameter int    NUM_QDMA     = 1,
   parameter int    NUM_CMAC_PORT   = 1
 ) (
@@ -123,8 +124,14 @@ module system_config #(
   input                   [1:0] m_axil_box1_rresp,
   output                        m_axil_box1_rready,
 
-  output                        card_sn_vld,
-  output            [0:11][7:0] card_sn,
+  output                        vpd_clk,
+  output                        vpd_srst,
+  input                         vpd_req,
+  input                         vpd_wr_rd_n,
+  input                  [14:0] vpd_addr,
+  input                   [7:0] vpd_wr_data,
+  output                  [7:0] vpd_rd_data,
+  output                        vpd_rd_vld,
 
   output                 [31:0] shell_rstn,
   input                  [31:0] shell_rst_done,
@@ -280,12 +287,16 @@ module system_config #(
   wire  [2:0] __axil_cms_int_arprot;
   wire  [3:0] __axil_cms_int_wstrb;
 
-  logic [7:0]       card_sn_len;
-  logic [0:15][7:0] __card_sn;
-  logic             error_boot_timeout;
-  logic             error_bad_axil_transaction;
-  logic             error_card_info_length;
-  logic             error_bad_info_parse;
+  wire        card_info_vld;
+  wire  [7:0] card_info_len;
+  wire        card_info_rd;
+  wire  [7:0] card_info_rd_addr;
+  wire        card_info_rd_vld;
+  wire  [7:0] card_info_rd_data;
+
+  wire        error_boot_timeout;
+  wire        error_bad_axil_transaction;
+  wire        error_card_info_length;
 
   wire        axil_qspi_awvalid;
   wire [31:0] axil_qspi_awaddr;
@@ -326,6 +337,9 @@ module system_config #(
   wire  [2:0] axil_qspi_int_awprot;
   wire  [2:0] axil_qspi_int_arprot;
   wire  [3:0] axil_qspi_int_wstrb;
+
+  wire        vpd_init_done;
+  wire        vpd_init_error;
    
   system_config_address_map #(
     .NUM_QDMA   (NUM_QDMA),
@@ -536,13 +550,13 @@ module system_config #(
     .user_rstn      (user_rstn),
     .user_rst_done  (user_rst_done),
 
-    .card_sn_vld    (card_sn_vld),
-    .card_sn_len    (card_sn_len),
-    .card_sn        (__card_sn),
-    .error_boot_timeout         (error_boot_timeout),
-    .error_bad_axil_transaction (error_bad_axil_transaction),
-    .error_card_info_length     (error_card_info_length),
-    .error_bad_info_parse       (error_bad_info_parse),
+    .vpd_init_done,
+    .vpd_init_error,
+    .card_info_vld,
+    .card_info_len,
+    .error_boot_timeout,
+    .error_bad_axil_transaction,
+    .error_card_info_length,
 
     .aclk           (aclk[0]),
     .aresetn        (aresetn)
@@ -580,7 +594,7 @@ module system_config #(
 
   // Generate 50MHz 'cms_clk'
 clk_wiz_50Mhz clk_wiz_cms_inst (
-    .clk_in1  (aclk),
+    .clk_in1  (aclk[0]),
     .resetn   (aresetn),
     .clk_out1 (clk_50mhz_wiz_out),
     .locked   (cms_locked)
@@ -647,7 +661,7 @@ end
       .m_axi_rvalid  (axil_qspi_int_rvalid),
       .m_axi_rready  (axil_qspi_int_rready),
 
-      .s_axi_aclk    (aclk),
+      .s_axi_aclk    (aclk[0]),
       .s_axi_aresetn (aresetn),
       .m_axi_aclk    (cms_clk),
       .m_axi_aresetn (cms_aresetn)
@@ -682,7 +696,7 @@ end
     .ext_spi_clk   (cms_clk)
   );
 
-axi_lite_clock_converter axi_clock_conv_cms_inst (
+  axi_lite_clock_converter axi_clock_conv_cms_inst (
       .s_axi_awaddr  (axil_cms_awaddr),
       .s_axi_awprot  (axil_cms_awprot),
       .s_axi_awvalid (axil_cms_awvalid),
@@ -723,13 +737,13 @@ axi_lite_clock_converter axi_clock_conv_cms_inst (
       .m_axi_rvalid  (axil_cms_int_rvalid),
       .m_axi_rready  (axil_cms_int_rready),
 
-      .s_axi_aclk    (aclk),
+      .s_axi_aclk    (aclk[0]),
       .s_axi_aresetn (aresetn),
       .m_axi_aclk    (cms_clk),
       .m_axi_aresetn (cms_aresetn)
     );
 
-cms_sn_fetch_fsm cms_sn_fetch_fsm_inst (
+cms_cardinfo_fetch_fsm cms_cardinfo_fetch_fsm_inst (
   .aclk    (cms_clk),
   .aresetn (cms_aresetn),
   // From controller
@@ -772,16 +786,16 @@ cms_sn_fetch_fsm cms_sn_fetch_fsm_inst (
   .m_axi_ctrl_WREADY (__axil_cms_int_wready),
   .m_axi_ctrl_WSTRB  (__axil_cms_int_wstrb),
   .m_axi_ctrl_WVALID (__axil_cms_int_wvalid),
-  .card_sn_vld (card_sn_vld),
-  .card_sn_len (card_sn_len),
-  .card_sn     (__card_sn),
-  .error_boot_timeout         (error_boot_timeout),
-  .error_bad_axil_transaction (error_bad_axil_transaction),
-  .error_card_info_length     (error_card_info_length),
-  .error_bad_info_parse       (error_bad_info_parse)
+  .card_info_vld,
+  .card_info_len,
+  .card_info_rd,
+  .card_info_rd_addr,
+  .card_info_rd_data,
+  .card_info_rd_vld,
+  .error_boot_timeout,
+  .error_bad_axil_transaction,
+  .error_card_info_length
 );
-
-assign card_sn = __card_sn[0:11];
 
 cms_subsystem_wrapper
   cms_subsystem_wrapper_inst (
@@ -843,5 +857,31 @@ cms_subsystem_wrapper
     .satellite_uart_0_rxd    (satellite_uart_0_rxd),
     .satellite_uart_0_txd    (satellite_uart_0_txd)
   );
+
+  system_config_vpd #(
+    .BUILD_ID        (BUILD_ID),
+    .FLASH_REG_OFFSET(32'h20000),
+    .CMS_REG_OFFSET  (32'h40000)
+  ) system_config_vpd_inst (
+    .clk (vpd_clk),
+    .srst(vpd_srst),
+    .init_done (vpd_init_done),
+    .init_error (vpd_init_error),
+    .vpd_req,
+    .vpd_wr_rd_n,
+    .vpd_addr,
+    .vpd_wr_data,
+    .vpd_rd_data,
+    .vpd_rd_vld,
+    .card_info_vld,
+    .card_info_len,
+    .card_info_rd,
+    .card_info_rd_addr,
+    .card_info_rd_data,
+    .card_info_rd_vld
+  );
+
+  assign vpd_clk = cms_clk;
+  assign vpd_srst = !cms_aresetn;
 
 endmodule: system_config

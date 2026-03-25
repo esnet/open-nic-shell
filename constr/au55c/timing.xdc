@@ -38,7 +38,5 @@ create_pblock pblock_qdma_subsystem
 add_cells_to_pblock [get_pblocks pblock_qdma_subsystem] [get_cells -quiet {qdma_if*.qdma_subsystem_inst}]
 resize_pblock [get_pblocks pblock_qdma_subsystem] -add {CLOCKREGION_X4Y0:CLOCKREGION_X7Y3}
 
-set_false_path -from [get_pins {system_config_inst/cms_sn_fetch_fsm_inst/card_sn_vld_reg/C}]
-set_false_path -from [get_pins {system_config_inst/cms_sn_fetch_fsm_inst/card_sn_len_reg*/C}]
-set_false_path -from [get_pins {system_config_inst/cms_sn_fetch_fsm_inst/card_sn_reg*/C}]
-set_false_path -from [get_pins {system_config_inst/cms_sn_fetch_fsm_inst/error*/C}]
+set_false_path -from [get_pins {system_config_inst/cms_cardinfo_fetch_fsm_inst/error*/C}]
+set_false_path -from [get_pins {system_config_inst/system_config_vpd_inst/init*/C}]
