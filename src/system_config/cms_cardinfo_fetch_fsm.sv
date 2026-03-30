@@ -55,11 +55,11 @@ module cms_cardinfo_fetch_fsm (
 );
 
 `ifdef SYNTHESIS
-    localparam int DEBOUNCE_CNT = 50*1000*1000;  // 50M 50MHz clock cycles = 1s
+    localparam int DEBOUNCE_CNT = 50*1000;       // 50k 50MHz clock cycles = 1ms
     localparam int BOOT_WAIT = 50*1000*1000;     // 50M 50MHz clock cycles = 1s
     localparam int BOOT_TIMEOUT = 250*1000*1000; // 250M 50MHz clock cycles = 5s
 `else
-    localparam int DEBOUNCE_CNT = 100;
+    localparam int DEBOUNCE_CNT = 10;
     localparam int BOOT_WAIT = 50;
     localparam int BOOT_TIMEOUT = 250;
 `endif
