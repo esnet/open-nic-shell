@@ -126,17 +126,20 @@ module system_config_vpd #(
     localparam int VPD_CARDINFO_START_OFFSET = VPD_VC_START_OFFSET + 3 + VPD_VC_LEN;
     localparam int VPD_VAR_START_OFFSET = VPD_CARDINFO_START_OFFSET; // Start of 'variable' data, retrieved from card info
                                                                      // ... or, end of 'static' data
-    localparam int VPD_ROM_SIZE = VPD_VAR_START_OFFSET;
+    localparam int VPD_STATIC_SIZE = VPD_VAR_START_OFFSET;
+    localparam int VPD_ROM_SIZE    = VPD_STATIC_SIZE + 3;
     localparam int VPD_ROM_SIZE_WID = $clog2(VPD_ROM_SIZE);
 
     localparam int VPD_VAR_SIZE = 128;
     localparam int VPD_VAR_SIZE_WID = $clog2(VPD_VAR_SIZE);
 
-    localparam int VPD_MAX_LEN = VPD_ROM_SIZE + VPD_VAR_SIZE;
+
+    localparam int VPD_MAX_LEN = VPD_STATIC_SIZE + VPD_VAR_SIZE;
     localparam int VPD_IDX_WID = $clog2(VPD_MAX_LEN);
     localparam int VPD_SIZE_WID = $clog2(VPD_MAX_LEN+1);
 
     localparam logic [15:0] VPD_RO_LEN = (VPD_MAX_LEN-1) - VPD_RO_START_OFFSET - 3; // Size of VPD-R (read-only data)
+    localparam logic [7:0]  VPD_ROM_RSVD_LEN = VPD_VAR_SIZE-4;
 
     // Typedefs
     typedef enum logic {
@@ -302,7 +305,6 @@ module system_config_vpd #(
     logic [0:VPD_ROM_SIZE-1][7:0] VPD_ROM;
     logic [7:0] VPD_RAM [VPD_VAR_SIZE];
     
-
     localparam logic [0:VPD_ROM_SIZE-1][7:0] VPD_ROM_CONTENTS = {
     // -- Product ID Section
         VPD_LRDT_ID,
@@ -320,9 +322,20 @@ module system_config_vpd #(
         "VH", VPD_VH_LEN, VPD_VH_LABEL, BUILD_GIT_HASH, 8'h0,
         "VT", VPD_VT_LEN, VPD_VT_LABEL, BUILD_TIMESTAMP_STR, 8'h0,
         "VF", VPD_VF_LEN, VPD_VF_LABEL, "0x", VPD_VF_VALUE[VPD_VF_VALUE_LEN-1:0], 8'h0,
-        "VC", VPD_VC_LEN, VPD_VC_LABEL, "0x", VPD_VC_VALUE[VPD_VC_VALUE_LEN-1:0], 8'h0
+        "VC", VPD_VC_LEN, VPD_VC_LABEL, "0x", VPD_VC_VALUE[VPD_VC_VALUE_LEN-1:0], 8'h0,
     // -- Variable data (i.e. card info) goes here (populated by Init FSM)
+    // -- Add RV (checksum) for all static data
+    //    This checksum is only used while card info data is unavailable or
+    //    in progress; this ensures that VPD queries always return data
+    //    corresponding to a valid (parseable, good checksum) database.
+        "RV", VPD_ROM_RSVD_LEN
     };
+
+    function automatic logic [7:0] get_static_byte_sum();
+        automatic logic [7:0] sum = 0;
+        for (int i = 0; i < VPD_STATIC_SIZE; i++) sum += VPD_ROM_CONTENTS[i];
+        return sum;
+    endfunction
 
     function automatic logic [7:0] get_rom_byte_sum();
         automatic logic [7:0] sum = 0;
@@ -330,13 +343,20 @@ module system_config_vpd #(
         return sum;
     endfunction
 
-    localparam logic [7:0] VPD_ROM_CHECKSUM = get_rom_byte_sum();
+    localparam logic [7:0] VPD_STATIC_SUM = get_static_byte_sum();
+ 
+    localparam logic [7:0] VPD_ROM_SUM = get_rom_byte_sum();
+    localparam logic [7:0] VPD_ROM_CHECKSUM = 9'h100-VPD_ROM_SUM;
 
     // ROM containing 'static' elements; card info is filled in
     // by the state machine after retrieval from CMS/SC
     initial VPD_ROM = VPD_ROM_CONTENTS;
 
-    always_ff @(posedge clk) vpd_rom_rd_data <= VPD_ROM[vpd_addr[VPD_ROM_SIZE_WID-1:0]];
+    always_ff @(posedge clk) begin
+        if (vpd_addr < VPD_ROM_SIZE)       vpd_rom_rd_data <= VPD_ROM[vpd_addr[VPD_ROM_SIZE_WID-1:0]];
+        else if (vpd_addr == VPD_ROM_SIZE) vpd_rom_rd_data <= VPD_ROM_CHECKSUM;
+        else                               vpd_rom_rd_data <= 8'h0;
+    end
 
     // Init (main) FSM
     // - Manage population of (non-static) elements of the VPD data structure
@@ -541,7 +561,7 @@ module system_config_vpd #(
             VPD_WR_TAG, VPD_CHKSUM_WR_TAG : vpd_init_wr_data = vpd_wr_tag[vpd_byte_idx];
             VPD_WR_LEN                    : vpd_init_wr_data = parse_len;
             VPD_WR_DATA                   : vpd_init_wr_data = card_info_rd_data;
-            VPD_CHKSUM_WR_LEN             : vpd_init_wr_data = (VPD_MAX_LEN-VPD_ROM_SIZE-1) - vpd_init_idx - 1; // Zero-pad to end of VPD (except for END tag)
+            VPD_CHKSUM_WR_LEN             : vpd_init_wr_data = (VPD_MAX_LEN-VPD_STATIC_SIZE-1) - vpd_init_idx - 1; // Zero-pad to end of VPD (except for END tag)
             VPD_CHKSUM_WR_DATA            : vpd_init_wr_data = vpd_chksum;
             default                       : vpd_init_wr_data = '0;
         endcase
@@ -555,7 +575,7 @@ module system_config_vpd #(
 
     // Calulate sum of all RO bytes
     always_ff @(posedge clk) begin
-        if (vpd_chksum_init) vpd_sum <= VPD_ROM_CHECKSUM;
+        if (vpd_chksum_init) vpd_sum <= VPD_STATIC_SUM;
         else if (vpd_chksum_acc) vpd_sum <= vpd_sum + vpd_init_rd_data;
     end
 
@@ -666,7 +686,7 @@ module system_config_vpd #(
             DONE: begin
                 vpd_ram_req     = vpd_req && !vpd_wr_rd_n;
                 vpd_ram_wr_rd_n = 1'b0;
-                vpd_ram_addr    = vpd_addr > VPD_ROM_SIZE-1 ? vpd_addr - VPD_ROM_SIZE : 0;
+                vpd_ram_addr    = vpd_addr > VPD_STATIC_SIZE-1 ? vpd_addr - VPD_STATIC_SIZE : 0;
                 vpd_ram_wr_data = '0;
             end
             ERROR: begin
@@ -705,10 +725,11 @@ module system_config_vpd #(
 
     always_comb begin
         vpd_rd_data = 8'hff;
-        if (__init_done && vpd_addr_r < VPD_MAX_LEN) begin
-            if (vpd_addr_r == VPD_MAX_LEN-1)    vpd_rd_data = VPD_SRDT_END;
-            else if (vpd_addr_r < VPD_ROM_SIZE) vpd_rd_data = vpd_rom_rd_data;
-            else                                vpd_rd_data = vpd_ram_rd_data;
+        if (vpd_addr_r < VPD_MAX_LEN) begin
+            if (vpd_addr_r == VPD_MAX_LEN-1)       vpd_rd_data = VPD_SRDT_END;
+            else if (vpd_addr_r < VPD_STATIC_SIZE) vpd_rd_data = vpd_rom_rd_data;
+            else if (__init_done)                  vpd_rd_data = vpd_ram_rd_data;
+            else                                   vpd_rd_data = vpd_rom_rd_data;
         end
     end
 
