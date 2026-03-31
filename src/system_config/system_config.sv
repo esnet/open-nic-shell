@@ -131,6 +131,8 @@ module system_config #(
 
   output                        vpd_clk,
   output                        vpd_srst,
+  output                        vpd_init_done,
+  output                        vpd_init_error,
   input                         vpd_req,
   input                         vpd_wr_rd_n,
   input                  [14:0] vpd_addr,
@@ -343,9 +345,6 @@ module system_config #(
   wire  [2:0] axil_qspi_int_arprot;
   wire  [3:0] axil_qspi_int_wstrb;
 
-  wire        vpd_init_done;
-  wire        vpd_init_error;
-   
   system_config_address_map #(
     .NUM_QDMA   (NUM_QDMA),
     .NUM_CMAC_PORT (NUM_CMAC_PORT)
