@@ -13,6 +13,9 @@ module system_config_vpd #(
 
     output logic        init_done,
     output logic        init_error,
+    output logic        init_early_read,
+    output logic [13:0] init_time_ms,
+    input  logic        init_done_mask,
 
     // VPD interface (one per physical function)
     input  logic        vpd_req,
@@ -38,6 +41,13 @@ module system_config_vpd #(
     localparam int          CARD_INFO_MAX_LEN = 128;
     localparam int          CARD_INFO_IDX_WID = $clog2(CARD_INFO_MAX_LEN);
     localparam int          CARD_INFO_SIZE_WID = $clog2(CARD_INFO_MAX_LEN+1);
+
+`ifdef SYNTHESIS
+    localparam int          CLKS_PER_MS = 50000; // 50 MHz clock
+`else
+    localparam int          CLKS_PER_MS = 50; // Sim only
+`endif
+    localparam int          CLK_CNT_WID = $clog2(CLKS_PER_MS);
 
     function automatic logic [7:0][7:0] get_dword_hex_string(input logic [31:0] dword);
         logic [7:0][7:0] dword_string;
@@ -300,6 +310,8 @@ module system_config_vpd #(
     logic [7:0]                   vpd_ram_rd_data;
 
     logic [14:0]                  vpd_addr_r;
+
+    logic [CLK_CNT_WID-1:0]       init_time_clks;
 
     // VPD data structure
     logic [0:VPD_ROM_SIZE-1][7:0] VPD_ROM;
@@ -728,7 +740,7 @@ module system_config_vpd #(
         if (vpd_addr_r < VPD_MAX_LEN) begin
             if (vpd_addr_r == VPD_MAX_LEN-1)       vpd_rd_data = VPD_SRDT_END;
             else if (vpd_addr_r < VPD_STATIC_SIZE) vpd_rd_data = vpd_rom_rd_data;
-            else if (__init_done)                  vpd_rd_data = vpd_ram_rd_data;
+            else if (init_done)                    vpd_rd_data = vpd_ram_rd_data;
             else                                   vpd_rd_data = vpd_rom_rd_data;
         end
     end
@@ -736,9 +748,22 @@ module system_config_vpd #(
     assign vpd_init_rd_data = vpd_ram_rd_data;
 
     // Drive init_* status outputs
-    always_ff @(posedge clk) begin
-        init_done <= __init_done;
-        init_error <= __init_error;
+    always_ff @(posedge clk or posedge srst) begin
+        if (srst) begin
+            init_done <= 1'b0;
+            init_error <= 1'b0;
+            init_early_read <= 1'b0;
+            init_time_clks <= '0;
+            init_time_ms <= '0;
+        end else begin
+            init_done <= init_done_mask ? 1'b0 : __init_done;
+            init_error <= __init_error;
+            if (!__init_done && !__init_error) begin
+                if (vpd_req && !vpd_wr_rd_n) init_early_read <= 1'b1;
+                init_time_clks <= init_time_clks < CLKS_PER_MS-1 ? init_time_clks + 1 : 0;
+                if (init_time_clks == CLKS_PER_MS-1) init_time_ms <= init_time_ms < '1 ? init_time_ms + 1 : init_time_ms;
+            end
+        end
     end
 
 endmodule : system_config_vpd

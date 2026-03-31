@@ -305,6 +305,10 @@ module system_config #(
   wire        error_bad_axil_transaction;
   wire        error_card_info_length;
 
+  wire        vpd_init_early_read;
+  wire [13:0] vpd_init_time_ms;
+  wire        vpd_init_done_mask;
+
   wire        axil_qspi_awvalid;
   wire [31:0] axil_qspi_awaddr;
   wire        axil_qspi_awready;
@@ -554,8 +558,12 @@ module system_config #(
     .user_rstn      (user_rstn),
     .user_rst_done  (user_rst_done),
 
+    .vpd_clk,
     .vpd_init_done,
     .vpd_init_error,
+    .vpd_init_early_read,
+    .vpd_init_time_ms,
+    .vpd_init_done_mask,
     .card_info_vld,
     .card_info_len,
     .error_boot_timeout,
@@ -876,6 +884,9 @@ cms_subsystem_wrapper
     .srst(vpd_srst),
     .init_done (vpd_init_done),
     .init_error (vpd_init_error),
+    .init_early_read (vpd_init_early_read),
+    .init_time_ms (vpd_init_time_ms),
+    .init_done_mask (vpd_init_done_mask),
     .vpd_req,
     .vpd_wr_rd_n,
     .vpd_addr,
