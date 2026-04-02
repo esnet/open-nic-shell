@@ -18,8 +18,13 @@
 `include "open_nic_shell_macros.vh"
 `timescale 1ns/1ps
 module open_nic_shell #(
-  parameter [31:0] BUILD_TIMESTAMP = 32'h01010000,
+  parameter        PRODUCT_ID      = "OpenNIC Shell",
+  parameter        APPLICATION_ID  = "(empty)",
   parameter [31:0] BUILD_ID        = 32'h0,
+  parameter        BUILD_GIT_REPO  = "(empty)",
+  parameter        BUILD_GIT_HASH  = "(empty)",
+  parameter [31:0] BUILD_TIMESTAMP = 32'h01010000,
+  parameter        BUILD_TIMESTAMP_STR = "(empty)",
   parameter int    MIN_PKT_LEN     = 64,
   parameter int    MAX_PKT_LEN     = 1518,
   parameter int    USE_PHYS_FUNC   = 1,
@@ -253,10 +258,13 @@ module open_nic_shell #(
   assign sys_clk_100mhz = ref_clk_100mhz;
 `endif
 
+  assign pcie_init_ready = vpd_init_done || vpd_init_error;
+
   pcie_vio pcie_vio_inst (
     .clk        (sys_clk_100mhz),
     .probe_in0  (__pcie_rstn_int[0]),
     .probe_in1  (pcie_rstn_int[0]),
+    .probe_in2  (pcie_init_ready),
     .probe_out0 (jtag_rst) // Active-high
   );
 
@@ -446,12 +454,16 @@ module open_nic_shell #(
 
   wire                         vpd_clk;
   wire                         vpd_srst;
+  wire                         vpd_init_done;
+  wire                         vpd_init_error;
   wire                         vpd_req;
   wire                         vpd_wr_rd_n;
   wire                  [14:0] vpd_addr;
   wire                   [7:0] vpd_wr_data;
   wire                   [7:0] vpd_rd_data;
   wire                         vpd_rd_vld;
+
+  wire                         pcie_init_ready;
 
   wire                  [31:0] shell_rstn;
   wire                  [31:0] shell_rst_done;
@@ -544,11 +556,16 @@ module open_nic_shell #(
 `endif
 
   system_config #(
-    .BUILD_TIMESTAMP (BUILD_TIMESTAMP),
-    .BUILD_ID        (BUILD_ID),
-    .NUM_QDMA        (NUM_QDMA),
-    .NUM_CMAC_PORT   (NUM_CMAC_PORT)
-  ) system_config_inst (
+    .PRODUCT_ID          (PRODUCT_ID),
+    .APPLICATION_ID      (APPLICATION_ID),
+    .BUILD_ID            (BUILD_ID),
+    .BUILD_GIT_REPO      (BUILD_GIT_REPO),
+    .BUILD_GIT_HASH      (BUILD_GIT_HASH),
+    .BUILD_TIMESTAMP     (BUILD_TIMESTAMP),
+    .BUILD_TIMESTAMP_STR (BUILD_TIMESTAMP_STR),
+    .NUM_QDMA            (NUM_QDMA),
+    .NUM_CMAC_PORT       (NUM_CMAC_PORT)
+  ) system_config_inst   (
 `ifdef __synthesis__
     .s_axil_awvalid      (axil_pcie_awvalid),
     .s_axil_awaddr       (axil_pcie_awaddr),
@@ -672,6 +689,8 @@ module open_nic_shell #(
 
     .vpd_clk             (vpd_clk),
     .vpd_srst            (vpd_srst),
+    .vpd_init_done       (vpd_init_done),
+    .vpd_init_error      (vpd_init_error),
     .vpd_req             (vpd_req),
     .vpd_wr_rd_n         (vpd_wr_rd_n),
     .vpd_addr            (vpd_addr),

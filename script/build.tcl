@@ -104,6 +104,7 @@ array set build_options {
     -impl        0
     -post_impl   0
     -user_plugin ""
+    -timestamp   0
     -bitstream_userid  "0xDEADC0DE"
     -bitstream_usr_access "0x66669999"
     -sim  0
@@ -112,7 +113,13 @@ array set build_options {
 set build_options(-user_plugin) ${plugin_dir}/p2p
 
 array set design_params {
+    -product_id       "OpenNIC shell"
+    -application_id   "(empty)"
+    -build_id         0
+    -build_git_repo   "(empty)"
+    -build_git_hash   "(empty)"
     -build_timestamp  0
+    -build_timestamp_str "(empty)"
     -min_pkt_len      64
     -max_pkt_len      1518
     -use_phys_func    1
@@ -121,8 +128,6 @@ array set design_params {
     -num_queue        512
     -num_cmac_port    1
 }
-set design_params(-build_timestamp) [clock format [clock seconds] -format %m%d%H%M]
-
 array set sim_params {
     -sim_exec_path    ""
     -sim_lib_path     ""
@@ -146,6 +151,9 @@ for {set i 0} {$i < $argc} {incr i 2} {
         puts "Skip unknown argument $arg and its value $val"
     }
 }
+
+set design_params(-build_timestamp) [clock format $build_options(-timestamp) -format %m%d%H%M]
+set design_params(-build_timestamp_str) [clock format $build_options(-timestamp) -format "%Y-%m-%dT%H:%M:%SZ" -gmt true]
 
 # Settings based on defaults or passed in values
 foreach {key value} [array get build_options] {
@@ -398,13 +406,12 @@ read_verilog -quiet -sv [glob -nocomplain -directory $src_dir "*.sv"]
 read_vhdl -quiet [glob -nocomplain -directory $src_dir "*.vhd"]
 
 # Set vivado generic
-set design_params(-build_timestamp) "32'h$design_params(-build_timestamp)"
 set generic ""
+set design_params(-build_timestamp) "32'h$design_params(-build_timestamp)"
 foreach {key value} [array get design_params] {
     set p [string toupper [string range $key 1 end]]
     lappend generic "$p=$value"
 }
-lappend generic "BUILD_ID=32'h$bitstream_userid"
 set_property -name generic -value $generic -object [current_fileset]
 set_property top $top [get_property srcset [current_run]]
 

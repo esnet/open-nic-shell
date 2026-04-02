@@ -42,6 +42,10 @@
 //     |    |      |
 //   0x02B  |      |
 // -----------------------------------------------------------------------------
+//   0x2C   |  RW  | VPD control register
+// -----------------------------------------------------------------------------
+//   0x30   |  RW  | VPD status register
+// -----------------------------------------------------------------------------
 `timescale 1ns/1ps
 module system_config_register #(
   parameter [31:0] BUILD_TIMESTAMP = 32'h01010000
@@ -68,8 +72,13 @@ module system_config_register #(
   output [31:0] user_rstn,
   input  [31:0] user_rst_done,
 
+  input         vpd_clk,
+  output        vpd_init_done_mask,
   input         vpd_init_done,
   input         vpd_init_error,
+  input         vpd_init_early_read,
+  input  [13:0] vpd_init_time_ms,
+
   input         card_info_vld,
   input   [7:0] card_info_len,
   input         error_boot_timeout,
@@ -94,7 +103,8 @@ module system_config_register #(
   localparam REG_DNA_0           = 12'h020;  // xilinx dna register (96b).
   localparam REG_DNA_1           = 12'h024;
   localparam REG_DNA_2           = 12'h028;
-  localparam REG_VPD_STATUS      = 12'h02C;
+  localparam REG_VPD_CONTROL     = 12'h02C;
+  localparam REG_VPD_STATUS      = 12'h030;
 
   // Registers
   reg          [31:0] reg_build_timestamp;
@@ -104,6 +114,8 @@ module system_config_register #(
   reg          [31:0] reg_shell_status;
   reg          [31:0] reg_user_rst;
   reg          [31:0] reg_user_status;
+  reg          [31:0] reg_vpd_control;
+  wire         [31:0] reg_vpd_status;
 
   wire         [31:0] reg_usr_access;  // xilinx usr_access register.
   reg          [95:0] reg_dna;         // xilinx dna register.
@@ -184,8 +196,11 @@ module system_config_register #(
         REG_DNA_2: begin
           reg_dout <= reg_dna[95:64];
         end
+        REG_VPD_CONTROL: begin
+          reg_dout <= reg_vpd_control;
+        end
         REG_VPD_STATUS: begin
-          reg_dout <= {18'h0, error_boot_timeout, error_bad_axil_transaction, error_card_info_length, card_info_len, card_info_vld, vpd_init_error, vpd_init_done};
+          reg_dout <= reg_vpd_status;
         end
         default: begin
           reg_dout <= 32'hDEADBEEF;
@@ -366,5 +381,37 @@ module system_config_register #(
 
 // ---- xilinx usr_access and dna register logic - end ---
 
+  // VPD control register
+  always @(posedge aclk) begin
+    if (~aresetn) begin
+      reg_vpd_control <= 32'h0;
+    end
+    else if (reg_en && reg_we && reg_addr == REG_VPD_CONTROL) begin
+      reg_vpd_control <= reg_din;
+    end
+  end
+
+  assign vpd_init_done_mask__aclk = reg_vpd_control[0];
+
+  xpm_cdc_single #(
+    .DEST_SYNC_FF (2),
+    .SRC_INPUT_REG(0)
+  ) i_xpm_cdc_single__vpd_init_done_mask (
+    .dest_clk ( vpd_clk ),
+    .dest_out ( vpd_init_done_mask ),
+    .src_clk  ( aclk ),
+    .src_in   ( vpd_init_done_mask__aclk )
+  );
+
+  xpm_cdc_array_single #(
+    .DEST_SYNC_FF (2),
+    .SRC_INPUT_REG (0),
+    .WIDTH (32)
+  ) i_xpm_cdc_single_array__vpd_status (
+    .dest_clk ( aclk ),
+    .dest_out ( reg_vpd_status ),
+    .src_clk  ( vpd_clk ),
+    .src_in   ( {3'h0, error_boot_timeout, error_bad_axil_transaction, error_card_info_length, card_info_len, card_info_vld, vpd_init_time_ms, vpd_init_early_read, vpd_init_error, vpd_init_done} )
+  );
 
 endmodule: system_config_register

@@ -17,10 +17,15 @@
 // *************************************************************************
 `timescale 1ns/1ps
 module system_config #(
-  parameter [31:0] BUILD_TIMESTAMP = 32'h01010000,
-  parameter [31:0] BUILD_ID = 32'h0,
-  parameter int    NUM_QDMA     = 1,
-  parameter int    NUM_CMAC_PORT   = 1
+  parameter        PRODUCT_ID          = "(empty)",
+  parameter        APPLICATION_ID      = "(empty)",
+  parameter [31:0] BUILD_ID            = 32'h0,
+  parameter        BUILD_GIT_REPO      = "(empty)",
+  parameter        BUILD_GIT_HASH      = "(empty)",
+  parameter [31:0] BUILD_TIMESTAMP     = 32'h01010000,
+  parameter        BUILD_TIMESTAMP_STR = "(empty)",
+  parameter int    NUM_QDMA            = 1,
+  parameter int    NUM_CMAC_PORT       = 1
 ) (
   input          [NUM_QDMA-1:0] s_axil_awvalid,
   input       [32*NUM_QDMA-1:0] s_axil_awaddr,
@@ -126,6 +131,8 @@ module system_config #(
 
   output                        vpd_clk,
   output                        vpd_srst,
+  output                        vpd_init_done,
+  output                        vpd_init_error,
   input                         vpd_req,
   input                         vpd_wr_rd_n,
   input                  [14:0] vpd_addr,
@@ -298,6 +305,10 @@ module system_config #(
   wire        error_bad_axil_transaction;
   wire        error_card_info_length;
 
+  wire        vpd_init_early_read;
+  wire [13:0] vpd_init_time_ms;
+  wire        vpd_init_done_mask;
+
   wire        axil_qspi_awvalid;
   wire [31:0] axil_qspi_awaddr;
   wire        axil_qspi_awready;
@@ -338,9 +349,6 @@ module system_config #(
   wire  [2:0] axil_qspi_int_arprot;
   wire  [3:0] axil_qspi_int_wstrb;
 
-  wire        vpd_init_done;
-  wire        vpd_init_error;
-   
   system_config_address_map #(
     .NUM_QDMA   (NUM_QDMA),
     .NUM_CMAC_PORT (NUM_CMAC_PORT)
@@ -550,8 +558,12 @@ module system_config #(
     .user_rstn      (user_rstn),
     .user_rst_done  (user_rst_done),
 
+    .vpd_clk,
     .vpd_init_done,
     .vpd_init_error,
+    .vpd_init_early_read,
+    .vpd_init_time_ms,
+    .vpd_init_done_mask,
     .card_info_vld,
     .card_info_len,
     .error_boot_timeout,
@@ -858,15 +870,23 @@ cms_subsystem_wrapper
     .satellite_uart_0_txd    (satellite_uart_0_txd)
   );
 
-  system_config_vpd #(
-    .BUILD_ID        (BUILD_ID),
-    .FLASH_REG_OFFSET(32'h20000),
-    .CMS_REG_OFFSET  (32'h40000)
+  system_config_vpd     #(
+    .PRODUCT_ID          (PRODUCT_ID),
+    .APPLICATION_ID      (APPLICATION_ID),
+    .BUILD_ID            (BUILD_ID),
+    .BUILD_GIT_REPO      (BUILD_GIT_REPO),
+    .BUILD_GIT_HASH      (BUILD_GIT_HASH),
+    .BUILD_TIMESTAMP_STR (BUILD_TIMESTAMP_STR),
+    .FLASH_REG_OFFSET    (32'h20000),
+    .CMS_REG_OFFSET      (32'h40000)
   ) system_config_vpd_inst (
     .clk (vpd_clk),
     .srst(vpd_srst),
     .init_done (vpd_init_done),
     .init_error (vpd_init_error),
+    .init_early_read (vpd_init_early_read),
+    .init_time_ms (vpd_init_time_ms),
+    .init_done_mask (vpd_init_done_mask),
     .vpd_req,
     .vpd_wr_rd_n,
     .vpd_addr,

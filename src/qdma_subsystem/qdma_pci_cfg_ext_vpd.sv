@@ -73,13 +73,13 @@ module qdma_pci_cfg_ext_vpd #(
 
     logic [FUNC_SEL_WID-1:0] func_sel;
 
-    logic             vpd_rdy;
-    logic             vpd_req_func    [NUM_PHYS_FUNC];
-    logic             vpd_wr_func     [NUM_PHYS_FUNC];
-    logic             vpd_rd_func     [NUM_PHYS_FUNC];
-    logic [7:0]       vpd_addr_func   [NUM_PHYS_FUNC];
-    logic [7:0]       vpd_wr_data_func[NUM_PHYS_FUNC];
-    logic             vpd_done_func   [NUM_PHYS_FUNC];
+    logic                    vpd_rdy;
+    logic                    vpd_req_func    [NUM_PHYS_FUNC];
+    logic                    vpd_wr_func     [NUM_PHYS_FUNC];
+    logic                    vpd_rd_func     [NUM_PHYS_FUNC];
+    logic [VPD_ADDR_WID-1:0] vpd_addr_func   [NUM_PHYS_FUNC];
+    logic [7:0]              vpd_wr_data_func[NUM_PHYS_FUNC];
+    logic                    vpd_done_func   [NUM_PHYS_FUNC];
 
     logic             __vpd_req;
     vpd_req_t         __vpd_req_data;

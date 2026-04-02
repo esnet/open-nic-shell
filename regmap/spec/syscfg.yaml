@@ -48,6 +48,11 @@ regs:
   - name: dna
     access: ro
     count: 3
+  - name: card_vpd_control
+    access: rw
+    fields:
+      - name: vpd_init_done_mask
+        width: 1
   - name: card_vpd_status
     access: ro
     fields:
@@ -55,6 +60,10 @@ regs:
         width: 1
       - name: vpd_init_error
         width: 1
+      - name: vpd_init_early_read
+        width: 1
+      - name: vpd_init_time_ms
+        width: 14
       - name: card_info_vld
         width: 1
       - name: card_info_len
