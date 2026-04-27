@@ -42,7 +42,7 @@
 // --------------------------------------------------
 //    0x80000  |  0xFFFFF  |  Box0 @ 250MHz
 // --------------------------------------------------
-//   0x200000  |  0x7FFFFF |  Box1 @ 322MHz
+//   0x400000  |  0x7FFFFF |  Box1 @ 322MHz
 // --------------------------------------------------
 
 `include "open_nic_shell_macros.vh"
@@ -257,7 +257,7 @@ module system_config_address_map #(
   localparam C_QSPI_BASE_ADDR  = 32'h20000;  // 12 bits
   localparam C_CMS_BASE_ADDR   = 32'h40000;  // 18 bits
   localparam C_BOX0_BASE_ADDR  = 32'h80000;  // 19 bits
-  localparam C_BOX1_BASE_ADDR  = 32'h200000; // 21 bits
+  localparam C_BOX1_BASE_ADDR  = 32'h400000; // 22 bits
 
   wire                [31:0] axil_scfg_awaddr;
   wire                [31:0] axil_scfg_araddr;

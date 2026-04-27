@@ -21,7 +21,7 @@ toplevel:
     2:
       name: bar2
       desc: all user logic
-      size: 0x00400000
+      size: 0x00800000
       decoder:
         name: bar2
         blocks:
@@ -70,5 +70,5 @@ toplevel:
             address: 0x80000
 
           - decoder: *box1_322mhz_decoder
-            address: 0x200000
+            address: 0x400000
 
