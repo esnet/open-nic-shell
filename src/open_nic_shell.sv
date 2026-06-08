@@ -60,6 +60,8 @@ module open_nic_shell #(
   output                   [1:0] qsfp_modsell,
   input                    [3:0] satellite_gpio,
 `elsif __au250__
+  input                          clk1_300mhz_p,
+  input                          clk1_300mhz_n,
   output                   [1:0] qsfp_resetl, 
   input                    [1:0] qsfp_modprsl,
   input                    [1:0] qsfp_intl,   
@@ -254,6 +256,10 @@ module open_nic_shell #(
   IBUFDS sys_clk_ibuf_inst (.I(sys_clk_3_p), .IB(sys_clk_3_n), .O(sys_clk_100mhz));
 `elsif __au55c__
   IBUFDS sys_clk_ibuf_inst (.I(sys_clk_3_p), .IB(sys_clk_3_n), .O(sys_clk_100mhz));
+`elsif __au250__
+  wire clk1_300mhz;
+  IBUFDS sys_clk_ibuf_inst (.I(clk1_300mhz_p), .IB(clk1_300mhz_n), .O(clk1_300mhz));
+  clk_wiz_100mhz_au250 clk_wiz_100mhz_au250_inst (.clk_in1(clk1_300mhz), .clk_out1(sys_clk_100mhz));
 `else
   assign sys_clk_100mhz = ref_clk_100mhz;
 `endif
