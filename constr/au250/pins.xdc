@@ -60,3 +60,10 @@ set_property -dict {PACKAGE_PIN BC19 IOSTANDARD LVCMOS12       }  [get_ports qsf
 set_property -dict {PACKAGE_PIN AV21 IOSTANDARD LVCMOS12       }  [get_ports qsfp_intl[1]    ]
 set_property -dict {PACKAGE_PIN AV22 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports qsfp_lpmode[1]  ]
 set_property -dict {PACKAGE_PIN AY20 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports qsfp_modsell[1] ]
+
+# Alveo U250 System Clock (300MHz Diff)
+set_property PACKAGE_PIN AW20 [get_ports clk1_300mhz_p]
+set_property IOSTANDARD  LVDS [get_ports clk1_300mhz_p]
+
+set_property PACKAGE_PIN AW19 [get_ports clk1_300mhz_n]
+set_property IOSTANDARD  LVDS [get_ports clk1_300mhz_n]

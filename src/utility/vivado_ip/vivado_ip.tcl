@@ -20,4 +20,5 @@ set ips {
     axi_lite_clock_converter
     ila_axi4s
     pcie_vio
+    clk_wiz_100mhz_au250
 }
