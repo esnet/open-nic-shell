@@ -38,7 +38,7 @@ module system_config_vpd #(
     localparam logic [7:0]  CARD_INFO_KEY__CARD_NAME  = 8'h27;
     localparam logic [7:0]  CARD_INFO_KEY__SC_VERSION = 8'h28;
 
-    localparam int          CARD_INFO_MAX_LEN = 128;
+    localparam int          CARD_INFO_MAX_LEN = 255;
     localparam int          CARD_INFO_IDX_WID = $clog2(CARD_INFO_MAX_LEN);
     localparam int          CARD_INFO_SIZE_WID = $clog2(CARD_INFO_MAX_LEN+1);
 

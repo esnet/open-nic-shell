@@ -76,7 +76,8 @@ module cms_cardinfo_fetch_fsm (
 
     localparam logic [1:0]  AXIL__RESP_OKAY = 2'b00;
 
-    localparam int CARDINFO_MAX_LEN = 128;
+    localparam int CARDINFO_MAX_LEN = 255;
+    localparam int CARDINFO_ARRAY_SIZE = 2**($clog2(CARDINFO_MAX_LEN));
 
     typedef enum logic [4:0] {
         RESET                      = 0,
@@ -153,7 +154,7 @@ module cms_cardinfo_fetch_fsm (
     logic [1:0]  byte_idx;
 
     logic       cardinfo_valid;
-    logic [7:0] cardinfo [CARDINFO_MAX_LEN];
+    logic [7:0] cardinfo [CARDINFO_ARRAY_SIZE];
 
     axil_state_t axil_state;
     axil_state_t nxt_axil_state;
