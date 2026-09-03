@@ -123,14 +123,14 @@ module system_config_vpd #(
     localparam     VPD_VF_LABEL = "Flash offset  : ";
     localparam int VPD_VF_LABEL_LEN = $bits(VPD_VF_LABEL)/8;
     localparam logic [7:0][7:0] VPD_VF_VALUE = get_dword_hex_string(FLASH_REG_OFFSET);
-    localparam int         VPD_VF_VALUE_LEN = get_dword_dec_string_len(VPD_VF_VALUE);
+    localparam int         VPD_VF_VALUE_LEN = get_dword_hex_string_len(VPD_VF_VALUE);
     localparam logic [7:0] VPD_VF_LEN = VPD_VF_LABEL_LEN + 2 + VPD_VF_VALUE_LEN + 1; // Include 0x prefix and null termination
 
     localparam int VPD_VC_START_OFFSET = VPD_VF_START_OFFSET + 3 + VPD_VF_LEN;
     localparam     VPD_VC_LABEL = "CMS offset    : ";
     localparam int VPD_VC_LABEL_LEN = $bits(VPD_VC_LABEL)/8;
     localparam logic [7:0][7:0] VPD_VC_VALUE = get_dword_hex_string(CMS_REG_OFFSET);
-    localparam int         VPD_VC_VALUE_LEN = get_dword_dec_string_len(VPD_VC_VALUE);
+    localparam int         VPD_VC_VALUE_LEN = get_dword_hex_string_len(VPD_VC_VALUE);
     localparam logic [7:0] VPD_VC_LEN = VPD_VC_LABEL_LEN + 2 + VPD_VC_VALUE_LEN + 1; // Include 0x prefix and null termination
 
     localparam int VPD_CARDINFO_START_OFFSET = VPD_VC_START_OFFSET + 3 + VPD_VC_LEN;
