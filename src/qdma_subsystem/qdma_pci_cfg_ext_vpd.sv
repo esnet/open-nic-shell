@@ -167,8 +167,8 @@ module qdma_pci_cfg_ext_vpd #(
                     end
                     VPD_IDLE : begin
                         reset_byte_idx = 1'b1;
-                        latch_vpd_meta = 1'b1;
                         if (cfg_write && cfg_ext_register_number == CFG_EXT_REGISTER__VPD_CTRL && cfg_ext_function_number == g_func) begin
+                            latch_vpd_meta = 1'b1;
                             if (cfg_ext_write_data[31]) nxt_vpd_state = VPD_WR_REQ;
                             else                        nxt_vpd_state = VPD_RD_REQ;
                         end
@@ -209,7 +209,12 @@ module qdma_pci_cfg_ext_vpd #(
                     VPD_RD_DONE : begin
                       vpd_done = 1'b1;
                       vpd_status = 1'b1;
-                      if (cfg_read && cfg_ext_register_number == CFG_EXT_REGISTER__VPD_CTRL && cfg_ext_function_number == g_func) nxt_vpd_state = VPD_IDLE;
+                      reset_byte_idx = 1'b1;
+                      if (cfg_write && cfg_ext_register_number == CFG_EXT_REGISTER__VPD_CTRL && cfg_ext_function_number == g_func) begin
+                          latch_vpd_meta = 1'b1;
+                          if (cfg_ext_write_data[31]) nxt_vpd_state = VPD_WR_REQ;
+                          else                        nxt_vpd_state = VPD_RD_REQ;
+                      end
                     end
                     default : begin
                       nxt_vpd_state = VPD_RESET;
@@ -233,7 +238,10 @@ module qdma_pci_cfg_ext_vpd #(
             initial vpd_data_reg[g_func] = 0;
             always @(posedge aclk) begin
               if (cfg_write && cfg_ext_register_number == CFG_EXT_REGISTER__VPD_DATA && cfg_ext_function_number == g_func) begin
-                  vpd_data_reg[g_func][byte_idx] <= cfg_ext_write_data;
+                  for (int b = 0; b < 4; b++) begin
+                      if (cfg_ext_write_byte_enable[b])
+                          vpd_data_reg[g_func][b] <= cfg_ext_write_data[b*8 +: 8];
+                  end
               end else if (vpd_state == VPD_RD_WAIT && __vpd_rd_vld) begin
                   vpd_data_reg[g_func][byte_idx] <= __vpd_rd_data;
               end
