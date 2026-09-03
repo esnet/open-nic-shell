@@ -401,8 +401,9 @@ module system_config_vpd #(
             GET_CARD_NAME : begin
                 parse_req = 1'b1;
                 parse_key = CARD_INFO_KEY__CARD_NAME;
-                if (parse_state == PARSE_DONE)       nxt_state = CARD_NAME_WRITE_TO_VPD;
-                else if (parse_state == PARSE_ERROR) nxt_state = GET_CARD_SN;
+                if (parse_state == PARSE_DONE)               nxt_state = CARD_NAME_WRITE_TO_VPD;
+                else if (parse_state == PARSE_KEY_NOT_FOUND) nxt_state = GET_CARD_SN;
+                else if (parse_state == PARSE_ERROR)         nxt_state = ERROR;
             end
             CARD_NAME_WRITE_TO_VPD: begin
                 vpd_wr_req = 1'b1;
@@ -413,8 +414,9 @@ module system_config_vpd #(
             GET_CARD_SN : begin
                 parse_req = 1'b1;
                 parse_key = CARD_INFO_KEY__CARD_SN;
-                if (parse_state == PARSE_DONE)       nxt_state = CARD_SN_WRITE_TO_VPD;
-                else if (parse_state == PARSE_ERROR) nxt_state = GET_SC_VERSION;
+                if (parse_state == PARSE_DONE)               nxt_state = CARD_SN_WRITE_TO_VPD;
+                else if (parse_state == PARSE_KEY_NOT_FOUND) nxt_state = GET_SC_VERSION;
+                else if (parse_state == PARSE_ERROR)         nxt_state = ERROR;
             end
             CARD_SN_WRITE_TO_VPD: begin
                 vpd_wr_req = 1'b1;
@@ -425,8 +427,14 @@ module system_config_vpd #(
             GET_SC_VERSION : begin
                 parse_req = 1'b1;
                 parse_key = CARD_INFO_KEY__SC_VERSION;
-                if (parse_state == PARSE_DONE)       nxt_state = SC_VERSION_WRITE_TO_VPD;
-                else if (parse_state == PARSE_ERROR) nxt_state = CHKSUM;
+                if (parse_state == PARSE_DONE) begin
+                    nxt_state = SC_VERSION_WRITE_TO_VPD;
+                end else if (parse_state == PARSE_KEY_NOT_FOUND) begin
+                    if (vpd_init_idx == 0) nxt_state = ERROR;
+                    else                   nxt_state = CHKSUM;
+                end else if (parse_state == PARSE_ERROR) begin
+                    nxt_state = ERROR;
+                end
             end 
             SC_VERSION_WRITE_TO_VPD : begin
                 vpd_wr_req = 1'b1;
@@ -634,7 +642,7 @@ module system_config_vpd #(
                 latch_key = 1'b1;
                 if (card_info_rd_vld) begin
                     if (parse_idx < card_info_len) nxt_parse_state = PARSE_GET_LEN;
-                    else                           nxt_parse_state = PARSE_ERROR;
+                    else                           nxt_parse_state = PARSE_KEY_NOT_FOUND;
                 end
             end
             PARSE_GET_LEN : begin
@@ -645,8 +653,8 @@ module system_config_vpd #(
             PARSE_WAIT_LEN : begin
                 latch_len = 1'b1;
                 if (card_info_rd_vld) begin
-                    if (parse_idx < card_info_len) nxt_parse_state = PARSE_TEST_LEN;
-                    else                           nxt_parse_state = PARSE_ERROR;
+                    if (parse_idx <= card_info_len) nxt_parse_state = PARSE_TEST_LEN;
+                    else                            nxt_parse_state = PARSE_ERROR;
                 end
             end
             PARSE_TEST_LEN : begin
@@ -663,7 +671,7 @@ module system_config_vpd #(
                 nxt_parse_state = PARSE_GET_KEY;
             end
             PARSE_KEY_NOT_FOUND : begin
-                nxt_parse_state = PARSE_ERROR;
+                nxt_parse_state = PARSE_IDLE;
             end
             PARSE_DONE : begin
                 nxt_parse_state = PARSE_IDLE;
