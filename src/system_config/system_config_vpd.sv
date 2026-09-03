@@ -39,7 +39,7 @@ module system_config_vpd #(
     localparam logic [7:0]  CARD_INFO_KEY__SC_VERSION = 8'h28;
 
     localparam int          CARD_INFO_MAX_LEN = 255;
-    localparam int          CARD_INFO_IDX_WID = $clog2(CARD_INFO_MAX_LEN);
+    localparam int          CARD_INFO_IDX_WID = $clog2(CARD_INFO_MAX_LEN+1);
     localparam int          CARD_INFO_SIZE_WID = $clog2(CARD_INFO_MAX_LEN+1);
 
 `ifdef SYNTHESIS
@@ -263,8 +263,8 @@ module system_config_vpd #(
     parse_state_t                 nxt_parse_state;
 
     logic                         reset_parse_idx;
-    logic [CARD_INFO_IDX_WID-1:0] parse_idx_incr;
-    logic [CARD_INFO_IDX_WID-1:0] parse_idx;
+    logic [CARD_INFO_IDX_WID:0]   parse_idx_incr;
+    logic [CARD_INFO_IDX_WID:0]   parse_idx;
     logic                         parse_req;
     logic [7:0]                   parse_key;
     logic [CARD_INFO_IDX_WID-1:0] parse_len;
@@ -489,8 +489,8 @@ module system_config_vpd #(
                 else if (vpd_chksum_req) nxt_vpd_state = VPD_CHKSUM_WR_TAG;
             end
             VPD_WR : begin
-                if (vpd_init_idx + parse_len + 3 < VPD_MAX_LEN-1) nxt_vpd_state = VPD_WR_TAG;
-                else                                              nxt_vpd_state = VPD_ERROR;
+                if (int'(vpd_init_idx) + int'(parse_len) + 7 <= VPD_VAR_SIZE) nxt_vpd_state = VPD_WR_TAG;
+                else                                                         nxt_vpd_state = VPD_ERROR;
             end
             VPD_WR_TAG : begin
                 vpd_init_wr = 1'b1;
@@ -527,8 +527,8 @@ module system_config_vpd #(
             end
             VPD_CHKSUM_INIT : begin
                 vpd_chksum_init = 1'b1;
-                if (vpd_init_idx + 4 < VPD_MAX_LEN-1) nxt_vpd_state = VPD_CHKSUM_RD_DATA;
-                else                                  nxt_vpd_state = VPD_ERROR;
+                if (int'(vpd_init_idx) < VPD_VAR_SIZE) nxt_vpd_state = VPD_CHKSUM_RD_DATA;
+                else                                   nxt_vpd_state = VPD_ERROR;
             end
             VPD_CHKSUM_RD_DATA : begin
                 vpd_init_rd = 1'b1;
@@ -562,10 +562,10 @@ module system_config_vpd #(
 
     // Cardinfo data mux
     assign card_info_rd      = (parse_state == PARSE_IDLE) ? vpd_cardinfo_rd      : parse_cardinfo_rd;
-    assign card_info_rd_addr = (parse_state == PARSE_IDLE) ? vpd_cardinfo_rd_addr : parse_idx;
+    assign card_info_rd_addr = (parse_state == PARSE_IDLE) ? vpd_cardinfo_rd_addr : parse_idx[CARD_INFO_IDX_WID-1:0];
 
     // Adjust card info pointer to account for type and length fields
-    assign vpd_cardinfo_rd_addr = parse_idx + vpd_byte_idx - 3;
+    assign vpd_cardinfo_rd_addr = parse_idx[CARD_INFO_IDX_WID-1:0] + vpd_byte_idx - 3;
 
     // Write data mux
     always_comb begin
@@ -654,12 +654,12 @@ module system_config_vpd #(
                 else                                                           nxt_parse_state = PARSE_ERROR;
             end
             PARSE_EVAL : begin
-                if (found_key == parse_key)                      nxt_parse_state = PARSE_DONE;
-                else if (parse_idx + parse_len == card_info_len) nxt_parse_state = PARSE_KEY_NOT_FOUND;
-                else                                             nxt_parse_state = PARSE_SKIP_VALUE;
+                if (found_key == parse_key)                        nxt_parse_state = PARSE_DONE;
+                else if ((parse_idx + parse_len) == card_info_len) nxt_parse_state = PARSE_KEY_NOT_FOUND;
+                else                                               nxt_parse_state = PARSE_SKIP_VALUE;
             end
             PARSE_SKIP_VALUE : begin
-                parse_idx_incr = parse_len;
+                parse_idx_incr = {1'b0, parse_len};
                 nxt_parse_state = PARSE_GET_KEY;
             end
             PARSE_KEY_NOT_FOUND : begin
