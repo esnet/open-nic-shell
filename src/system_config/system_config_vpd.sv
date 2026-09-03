@@ -208,7 +208,7 @@ module system_config_vpd #(
         PARSE_KEY_NOT_FOUND
     } parse_state_t;
 
-    typedef enum logic [3:0] {
+    typedef enum logic [4:0] {
         VPD_RESET,
         VPD_IDLE,
         VPD_WR,
@@ -223,6 +223,7 @@ module system_config_vpd #(
         VPD_CHKSUM_RD_DATA,
         VPD_CHKSUM_ACC,
         VPD_CHKSUM_WR_DATA,
+        VPD_CHKSUM_PAD,
         VPD_DONE,
         VPD_ERROR
     } vpd_state_t;
@@ -551,7 +552,13 @@ module system_config_vpd #(
             VPD_CHKSUM_WR_DATA : begin
                 vpd_init_wr = 1'b1;
                 inc_vpd_init_idx = 1'b1;
-                nxt_vpd_state = VPD_DONE;
+                if (vpd_init_idx == VPD_VAR_SIZE - 1) nxt_vpd_state = VPD_DONE;
+                else                                  nxt_vpd_state = VPD_CHKSUM_PAD;
+            end
+            VPD_CHKSUM_PAD : begin
+                vpd_init_wr = 1'b1;
+                inc_vpd_init_idx = 1'b1;
+                if (vpd_init_idx == VPD_VAR_SIZE - 1) nxt_vpd_state = VPD_DONE;
             end
             VPD_DONE : begin
                 nxt_vpd_state = VPD_IDLE;
@@ -583,6 +590,7 @@ module system_config_vpd #(
             VPD_WR_DATA                   : vpd_init_wr_data = card_info_rd_data;
             VPD_CHKSUM_WR_LEN             : vpd_init_wr_data = (VPD_MAX_LEN-VPD_STATIC_SIZE-1) - vpd_init_idx - 1; // Zero-pad to end of VPD (except for END tag)
             VPD_CHKSUM_WR_DATA            : vpd_init_wr_data = vpd_chksum;
+            VPD_CHKSUM_PAD                : vpd_init_wr_data = 8'h00;
             default                       : vpd_init_wr_data = '0;
         endcase
     end
