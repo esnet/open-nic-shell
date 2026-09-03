@@ -124,12 +124,14 @@ module qdma_pci_cfg_ext_vpd #(
             vpd_state_t              nxt_vpd_state;
 
             logic                    latch_vpd_meta;
+            logic                    clear_vpd_flag;
+            logic                    set_vpd_flag;
 
             logic [1:0]              byte_idx;
             logic                    reset_byte_idx;
             logic                    inc_byte_idx;
 
-            logic                    vpd_status;
+            logic                    vpd_flag;
             logic                    vpd_arb_req;
             logic                    vpd_arb_grant;
             logic [VPD_ADDR_WID-1:0] vpd_base_addr;
@@ -139,7 +141,7 @@ module qdma_pci_cfg_ext_vpd #(
             logic                    vpd_done;
 
             // VPD capability/control register
-            assign vpd_ctrl_reg[g_func].flag    = vpd_status;
+            assign vpd_ctrl_reg[g_func].flag    = vpd_flag;
             assign vpd_ctrl_reg[g_func].addr    = vpd_base_addr;
             assign vpd_ctrl_reg[g_func].NXT_CAP = CFG_EXT_NXT_CAP;
             assign vpd_ctrl_reg[g_func].CAP_ID  = CFG_EXT_CAP_ID__VPD;
@@ -156,36 +158,42 @@ module qdma_pci_cfg_ext_vpd #(
                 reset_byte_idx = 1'b0;
                 inc_byte_idx = 1'b0;
                 vpd_arb_req = 1'b0;
-                vpd_status = 1'b0;
+                set_vpd_flag = 1'b0;
+                clear_vpd_flag = 1'b0;
                 latch_vpd_meta = 1'b0;
                 vpd_wr = 1'b0;
                 vpd_rd = 1'b0;
                 vpd_done = 1'b0;
                 case (vpd_state)
                     VPD_RESET : begin
+                        clear_vpd_flag = 1'b1;
                         nxt_vpd_state = VPD_IDLE;
                     end
                     VPD_IDLE : begin
                         reset_byte_idx = 1'b1;
                         if (cfg_write && cfg_ext_register_number == CFG_EXT_REGISTER__VPD_CTRL && cfg_ext_function_number == g_func) begin
                             latch_vpd_meta = 1'b1;
-                            if (cfg_ext_write_data[31]) nxt_vpd_state = VPD_WR_REQ;
-                            else                        nxt_vpd_state = VPD_RD_REQ;
+                            if (cfg_ext_write_data[31]) begin
+                                set_vpd_flag = 1'b1;
+                                nxt_vpd_state = VPD_WR_REQ;
+                            end else begin
+                                clear_vpd_flag = 1'b1;
+                                nxt_vpd_state = VPD_RD_REQ;
+                            end
                         end
                     end
                     VPD_WR_REQ : begin
                         vpd_arb_req = 1'b1;
-                        vpd_status = 1'b1;
                         if (vpd_arb_grant) nxt_vpd_state = VPD_WR;
                     end
                     VPD_WR : begin
                         inc_byte_idx = 1'b1;
-                        vpd_status = 1'b1;
                         vpd_wr = 1'b1;
                         if (byte_idx == 3) nxt_vpd_state = VPD_WR_DONE;
                     end
                     VPD_WR_DONE : begin
                         vpd_done = 1'b1;
+                        clear_vpd_flag = 1'b1;
                         nxt_vpd_state = VPD_IDLE;
                     end
                     VPD_RD_REQ : begin
@@ -208,13 +216,8 @@ module qdma_pci_cfg_ext_vpd #(
                     end
                     VPD_RD_DONE : begin
                       vpd_done = 1'b1;
-                      vpd_status = 1'b1;
-                      reset_byte_idx = 1'b1;
-                      if (cfg_write && cfg_ext_register_number == CFG_EXT_REGISTER__VPD_CTRL && cfg_ext_function_number == g_func) begin
-                          latch_vpd_meta = 1'b1;
-                          if (cfg_ext_write_data[31]) nxt_vpd_state = VPD_WR_REQ;
-                          else                        nxt_vpd_state = VPD_RD_REQ;
-                      end
+                      set_vpd_flag = 1'b1;
+                      nxt_vpd_state = VPD_IDLE;
                     end
                     default : begin
                       nxt_vpd_state = VPD_RESET;
@@ -227,6 +230,13 @@ module qdma_pci_cfg_ext_vpd #(
                     vpd_base_addr <= cfg_ext_write_data[30:16];
                     vpd_wr_byte_en <= cfg_ext_write_byte_enable;
                 end
+            end
+
+            initial vpd_flag = 1'b0;
+            always @(posedge aclk) begin
+                if (!aresetn)            vpd_flag <= 1'b0;
+                else if (clear_vpd_flag) vpd_flag <= 1'b0;
+                else if (set_vpd_flag)   vpd_flag <= 1'b1;
             end
 
             initial byte_idx = 0;
