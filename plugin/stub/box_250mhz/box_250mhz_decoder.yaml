@@ -1,0 +1,14 @@
+name: box_250mhz
+
+blocks:
+  empty: &empty
+    name: box_250mhz_empty
+    info: |
+      This block is a placeholder for the box_250mhz stub plugin, which has no registers.
+    regs: []
+
+interfaces:
+  - block: *empty
+    address: 0x000000
+    width: 21
+    name: box_250mhz_empty

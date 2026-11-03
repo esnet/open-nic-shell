@@ -1,0 +1,14 @@
+name: box_322mhz
+
+blocks:
+  empty: &empty
+    name: box_322mhz_empty
+    info: |
+      This block is a placeholder for the box_322mhz stub plugin, which has no registers.
+    regs: []
+
+interfaces:
+  - block: *empty
+    address: 0x000000
+    width: 16
+    name: box_322mhz_empty
