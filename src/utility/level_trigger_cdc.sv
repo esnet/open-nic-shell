@@ -24,7 +24,8 @@
 // The implementation uses an asynchronous FIFO.  The depth should be large
 // enough so that no event in the source domain will be missed.  When
 // `src_valid` is asserted while the FIFO is full, `src_miss` will be asserted
-// indicating the event is missed.
+// indicating the event is missed. src_ready also accounts for reset recovery,
+// allowing a producer to defer events until the FIFO can accept them.
 module level_trigger_cdc #(
   parameter int DATA_W     = 32,
   parameter int FIFO_DEPTH = 64
@@ -37,7 +38,8 @@ module level_trigger_cdc #(
 
   input               src_clk,
   input               dst_clk,
-  input               src_rstn
+  input               src_rstn,
+  output              src_ready
 );
 
   localparam C_FIFO_DATA_W = (DATA_W == 0) ? 1 : DATA_W;
@@ -48,6 +50,8 @@ module level_trigger_cdc #(
   wire [C_FIFO_DATA_W-1:0] fifo_dout;
   wire                     fifo_empty;
   wire                     fifo_full;
+  wire                     wr_rst_busy;
+  wire                     rd_rst_busy;
 
   xpm_fifo_async #(
     .DOUT_RESET_VALUE    ("0"),
@@ -88,15 +92,16 @@ module level_trigger_cdc #(
     .wr_clk        (src_clk),
     .rd_clk        (dst_clk),
     .rst           (~src_rstn),
-    .rd_rst_busy   (),
-    .wr_rst_busy   ()
+    .rd_rst_busy   (rd_rst_busy),
+    .wr_rst_busy   (wr_rst_busy)
   );
 
-  assign fifo_wr_en = src_valid;
+  assign src_ready  = src_rstn && !fifo_full && !wr_rst_busy;
+  assign fifo_wr_en = src_valid && src_ready;
   assign fifo_din   = (DATA_W == 0) ? 1'b0 : src_data;
-  assign fifo_rd_en = ~fifo_empty;
-  assign src_miss   = fifo_full & src_valid;
-  assign dst_valid  = ~fifo_empty;
+  assign fifo_rd_en = !fifo_empty && !rd_rst_busy;
+  assign src_miss   = !src_ready && src_valid;
+  assign dst_valid  = fifo_rd_en;
   assign dst_data   = (DATA_W == 0) ? 1'b0 : fifo_dout;
 
 endmodule: level_trigger_cdc

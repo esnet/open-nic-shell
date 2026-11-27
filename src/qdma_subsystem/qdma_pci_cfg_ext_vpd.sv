@@ -22,6 +22,11 @@ module qdma_pci_cfg_ext_vpd #(
     input  logic [7:0]       vpd_rd_data,
     input  logic             vpd_rd_vld
 );
+    initial begin
+        if (NUM_PHYS_FUNC < 1 || NUM_PHYS_FUNC > 256)
+            $fatal(1, "NUM_PHYS_FUNC must be between 1 and 256");
+    end
+
     // Parameters
     localparam int CFG_EXT_CAP_ID__VPD = 8'h03;
     localparam int CFG_EXT_LEGACY_LO_DWORD_IDX = 10'h0B0 >> 2;
@@ -32,7 +37,7 @@ module qdma_pci_cfg_ext_vpd #(
 
     localparam int VPD_ADDR_WID = 15;
 
-    localparam int FUNC_SEL_WID = $clog2(NUM_PHYS_FUNC);
+    localparam int FUNC_SEL_WID = NUM_PHYS_FUNC > 1 ? $clog2(NUM_PHYS_FUNC) : 1;
 
     // Typedefs
     typedef enum logic [3:0] {
@@ -65,6 +70,9 @@ module qdma_pci_cfg_ext_vpd #(
     } vpd_resp_t;
 
     // Signals
+    logic cfg_srst;
+    logic data_srst;
+    logic req_fifo_rdy;
     logic cfg_register_in_range;
     logic cfg_read;
     logic cfg_write;
@@ -100,7 +108,7 @@ module qdma_pci_cfg_ext_vpd #(
     // Config register read
     initial cfg_ext_read_data_valid = 1'b0;
     always @(posedge aclk) begin
-        if (!aresetn)      cfg_ext_read_data_valid <= 1'b0;
+        if (cfg_srst)      cfg_ext_read_data_valid <= 1'b0;
         else if (cfg_read) cfg_ext_read_data_valid <= 1'b1;
         else               cfg_ext_read_data_valid <= 1'b0;
     end
@@ -149,7 +157,7 @@ module qdma_pci_cfg_ext_vpd #(
             // VPD write/read FSM
             initial vpd_state = VPD_RESET;
             always @(posedge aclk) begin
-                if (!aresetn) vpd_state <= VPD_RESET;
+                if (cfg_srst) vpd_state <= VPD_RESET;
                 else          vpd_state <= nxt_vpd_state;
             end
 
@@ -187,9 +195,11 @@ module qdma_pci_cfg_ext_vpd #(
                         if (vpd_arb_grant) nxt_vpd_state = VPD_WR;
                     end
                     VPD_WR : begin
-                        inc_byte_idx = 1'b1;
-                        vpd_wr = 1'b1;
-                        if (byte_idx == 3) nxt_vpd_state = VPD_WR_DONE;
+                        if (req_fifo_rdy) begin
+                            inc_byte_idx = 1'b1;
+                            vpd_wr = 1'b1;
+                            if (byte_idx == 3) nxt_vpd_state = VPD_WR_DONE;
+                        end
                     end
                     VPD_WR_DONE : begin
                         vpd_done = 1'b1;
@@ -201,8 +211,10 @@ module qdma_pci_cfg_ext_vpd #(
                         if (vpd_arb_grant) nxt_vpd_state = VPD_RD;
                     end
                     VPD_RD : begin
-                      vpd_rd = 1'b1;
-                      nxt_vpd_state = VPD_RD_WAIT;
+                      if (req_fifo_rdy) begin
+                          vpd_rd = 1'b1;
+                          nxt_vpd_state = VPD_RD_WAIT;
+                      end
                     end
                     VPD_RD_WAIT : begin
                       if (__vpd_rd_vld) begin
@@ -234,7 +246,7 @@ module qdma_pci_cfg_ext_vpd #(
 
             initial vpd_flag = 1'b0;
             always @(posedge aclk) begin
-                if (!aresetn)            vpd_flag <= 1'b0;
+                if (cfg_srst)            vpd_flag <= 1'b0;
                 else if (clear_vpd_flag) vpd_flag <= 1'b0;
                 else if (set_vpd_flag)   vpd_flag <= 1'b1;
             end
@@ -262,7 +274,7 @@ module qdma_pci_cfg_ext_vpd #(
             assign vpd_wr_func     [g_func] = vpd_wr && vpd_wr_byte_en[byte_idx];
             assign vpd_rd_func     [g_func] = vpd_rd;
             assign vpd_addr_func   [g_func] = vpd_base_addr + byte_idx;
-            assign vpd_wr_data_func[g_func] = vpd_data_reg[byte_idx];
+            assign vpd_wr_data_func[g_func] = vpd_data_reg[g_func][byte_idx];
             assign vpd_done_func   [g_func] = vpd_done;
 
         end : g__func
@@ -276,7 +288,7 @@ module qdma_pci_cfg_ext_vpd #(
 
     initial arb_state = ARB_RESET;
     always @(posedge aclk) begin
-        if (!aresetn) arb_state <= ARB_RESET;
+        if (cfg_srst) arb_state <= ARB_RESET;
         else          arb_state <= nxt_arb_state;
     end
 
@@ -288,8 +300,8 @@ module qdma_pci_cfg_ext_vpd #(
                 nxt_arb_state = ARB_IDLE;
             end
             ARB_IDLE : begin
-                vpd_rdy = 1'b1;
-                if (vpd_req_func[func_sel]) nxt_arb_state = ARB_BUSY;
+                vpd_rdy = req_fifo_rdy;
+                if (req_fifo_rdy && vpd_req_func[func_sel]) nxt_arb_state = ARB_BUSY;
             end
             ARB_BUSY : begin
                 if (vpd_done_func[func_sel]) nxt_arb_state = ARB_IDLE;
@@ -299,6 +311,19 @@ module qdma_pci_cfg_ext_vpd #(
             end
         endcase
     end
+
+    // Either reset aborts the complete transaction and flushes both CDC FIFOs.
+    // Deassert reset synchronously in each domain.
+    xpm_cdc_async_rst #(
+        .DEST_SYNC_FF(3), .INIT_SYNC_FF(1), .RST_ACTIVE_HIGH(1)
+    ) i_xpm_cdc_async_rst__cfg (
+        .src_arst(!aresetn || vpd_srst), .dest_clk(aclk), .dest_arst(cfg_srst)
+    );
+    xpm_cdc_async_rst #(
+        .DEST_SYNC_FF(3), .INIT_SYNC_FF(1), .RST_ACTIVE_HIGH(1)
+    ) i_xpm_cdc_async_rst__data (
+        .src_arst(!aresetn || vpd_srst), .dest_clk(vpd_clk), .dest_arst(data_srst)
+    );
 
     // Cross VPD request interface from aclk to vpd_clk domains
     // -- Pack bus
@@ -318,7 +343,8 @@ module qdma_pci_cfg_ext_vpd #(
         .dst_data  ( vpd_req_data ),
         .src_clk   ( aclk ),
         .dst_clk   ( vpd_clk ),
-        .src_rstn  ( aresetn )
+        .src_rstn  ( !cfg_srst ),
+        .src_ready ( req_fifo_rdy )
     );
     // -- Unpack bus
     assign vpd_wr_rd_n = vpd_req_data.wr_rd_n;
@@ -340,7 +366,8 @@ module qdma_pci_cfg_ext_vpd #(
         .dst_data  ( __vpd_resp_data ),
         .src_clk   ( vpd_clk ),
         .dst_clk   ( aclk ),
-        .src_rstn  ( !vpd_srst )
+        .src_rstn  ( !data_srst ),
+        .src_ready ( )
     );
     // --Unpack bus
     assign __vpd_rd_data = __vpd_resp_data.rd_data;
